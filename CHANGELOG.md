@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Clarify the public quick-start workflow and the two bundled demo fixtures.
+- Document the `r-fnn` dependency required by GF offset calculations and the
+  `bioma doctor --strict` environment check.
+
 ## 0.8.0 - 2026-09-03
 
 - Declare the BioMA source distribution under GPL-3.0-only.

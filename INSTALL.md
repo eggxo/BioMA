@@ -4,6 +4,11 @@ BioMA source code is distributed under GPL-3.0-only; see `LICENSE`. The
 MaxEnt jar and external research packages are separate dependencies with their
 own licenses.
 
+The public source repository is available at
+<https://github.com/eggxo/BioMA>. The `v0.8.0` tag is the tested release
+candidate; use a tagged release rather than an untracked working tree when
+reproducing an analysis.
+
 ## Supported platform
 
 BioMA 0.8.0 targets Linux, Python 3.8 or newer, R, GDAL command-line tools, and
@@ -51,6 +56,25 @@ Rscript -e 'remotes::install_url("https://download.r-forge.r-project.org/src/con
 Rscript -e 'remotes::install_github("meixilin/mar@f2a60772504a52e518d6827a8d22de1ef4dd11d4")'
 ```
 
+The GF offset command additionally requires `FNN` in the same R environment as
+`gradientForest`, `data.table`, and `geosphere`. Install the Conda binary
+package into the environment used by GF (the package name is `r-fnn`):
+
+```bash
+conda install -n <gf-environment> -c conda-forge r-fnn
+```
+
+Do not mix a system R installation with the Conda libraries used by the GF
+environment. Confirm that the selected executable sees all four packages:
+
+```bash
+bioma doctor workflow.example.ini --rscript "$CONDA_PREFIX/bin/Rscript"
+```
+
+For a project that enables GF, use `--strict` after setting the module's
+`rscript` to the same environment. A missing `FNN` is reported before any
+offset calculation starts.
+
 Then verify the command and run the bundled Python regression tests:
 
 ```bash
@@ -76,6 +100,22 @@ The optional project path lets BioMA mark dependencies for enabled modules as
 required and discover module-specific `Rscript`, Python, GDAL, Java, and
 `maxent.jar` settings. `--strict` treats optional checks as failures, which is
 useful in continuous integration. The command is read-only.
+
+## Portable demo fixtures
+
+The source archive includes two small, server-independent fixtures:
+
+* `tests/data/demo/` generates a seven-module project with placeholder rasters,
+  three explicit genomic streams, 19 deterministic RONA LD lists, and no
+  private paths. Use `--valid-rasters` when testing GDAL and readable GeoTIFFs.
+* `tests/data/gf_frequency_50/` contains a fixed 50-site, 175-sample,
+  25-population GF frequency fixture and its expected output. It is intended
+  for a fast installation/regression check and is not a substitute for
+  species-level validation.
+
+The generated demo files are disposable. BioMA reads the fixture inputs and
+does not modify them; generated compatibility tables and manifests are written
+under the selected results directory.
 
 ## MaxEnt license requirement
 

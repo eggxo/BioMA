@@ -28,3 +28,8 @@ The generated project keeps the three genomic streams explicit:
 The 19 `LD_BIO*.prune.in` files are small deterministic fixtures.  They model
 the lists normally produced by PLINK and are recorded by the RONA manifest;
 they are not inferred from the population environment table.
+
+For a faster GF-only check, use the sibling fixture in
+`tests/data/gf_frequency_50/`. It contains 50 adaptive sites, 175 samples, 25
+populations, and an expected ALT-frequency table. Both fixtures are included
+in the source distribution and are safe to use in continuous integration.

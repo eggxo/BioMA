@@ -1,10 +1,51 @@
 # BioMA
 
+[![CI](https://github.com/eggxo/BioMA/actions/workflows/ci.yml/badge.svg)](https://github.com/eggxo/BioMA/actions/workflows/ci.yml)
+[![License: GPL-3.0-only](https://img.shields.io/badge/license-GPL--3.0--only-blue.svg)](LICENSE)
+
 BioMA is an auditable command-line workflow for multidimensional climate-vulnerability analyses. It currently integrates seven modules while keeping every module independently runnable: Gradient Forest (GF), RONA, MAR, genetic loadM/loadD, MaxEnt niche modelling, WFmoments genetic-diversity loss, and multidimensional vulnerability synthesis.
 
 BioMA is released under the GNU General Public License, version 3 only
 (GPL-3.0-only). The full license text is included in `LICENSE`. The MaxEnt jar
 and the two research R packages remain subject to their own distribution terms.
+
+## Quick start
+
+BioMA is validated on Linux. The shortest installation path uses the locked
+Conda environment:
+
+```bash
+conda-lock install --name bioma conda-lock.yml
+conda activate bioma
+python -m pip install --no-deps .
+bioma --version
+bioma doctor
+```
+
+Run the server-independent seven-module smoke project before supplying real
+data:
+
+```bash
+python tests/data/demo/make_demo.py --outdir /tmp/bioma-demo
+bin/bioma project /tmp/bioma-demo/project.ini --dry-run
+```
+
+The demo validates configuration, input wiring, provenance generation, and
+module contracts. It does not replace a scientific run with licensed MaxEnt
+and research R packages; those dependencies are checked by `bioma doctor` and
+documented in [INSTALL.md](INSTALL.md).
+
+For a complete analysis, copy [workflow.project.example.ini](workflow.project.example.ini),
+replace the paths in `[inputs]`, select the modules in `[modules]`, and run:
+
+```bash
+bin/bioma project project.ini --dry-run
+bin/bioma project project.ini
+```
+
+The project command is resumable and writes configuration snapshots, input
+hashes, module status, a TSV summary, and an HTML report. It never edits the
+declared source VCFs, tables, rasters, or masks.
 
 ## Whole project: one command
 
@@ -142,6 +183,20 @@ GeoTIFF set is needed. The automated suite runs one minimum contract test per
 module and never requires the production server paths. R/MaxEnt numerical tests
 are separate because `maxent.jar` and the research R packages have their own
 licenses and installation channels.
+
+The repository also includes `tests/data/gf_frequency_50/`, a fixed 50-site
+GF fixture with 175 samples and 25 populations. It contains the input VCF,
+sample table, expected population ALT-frequency output, and a fixture manifest
+for a fast regression check:
+
+```bash
+python -m unittest tests.test_gf_frequency -v
+```
+
+Both fixtures are included in the source distribution and contain no private
+server paths or production data. Additional species-specific test datasets can
+be added under `tests/data/<name>/` with a manifest, license/permission note,
+and a deterministic expected-output check.
 
 ## Complete GF workflow: one command
 
