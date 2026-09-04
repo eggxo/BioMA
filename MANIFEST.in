@@ -6,8 +6,8 @@ exclude workflow.*.test.ini workflow.50test.ini workflow.6140.ini
 recursive-include bin *
 recursive-include bioma/scripts *.R *.py
 recursive-include tests *.py *.R
-recursive-include tests/data/demo *
-recursive-include tests/data/gf_frequency_50 *
+recursive-include tests/data/demo *.py *.md *.json *.tsv *.vcf *.prune.in
+recursive-include tests/data/gf_frequency_50 *.tsv *.json *.vcf
 global-exclude __pycache__/*
 global-exclude *.py[cod]
 global-exclude *.tgz

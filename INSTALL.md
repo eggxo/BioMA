@@ -27,7 +27,7 @@ instead of solving the unpinned environment again. It contains concrete Conda
 and pip package URLs and SHA-256 checksums:
 
 ```bash
-conda-lock install --name bioma --file conda-lock.yml
+conda-lock install --name bioma conda-lock.yml
 conda activate bioma
 python -m pip install --no-deps .
 ```
