@@ -422,6 +422,10 @@ def _configured_input_paths(config: ProjectConfig) -> Dict[str, Path]:
     # not appear verbatim in PROJECT_INPUT_TARGETS.
     if "population_samples" in config.inputs:
         overridden_targets.add(("gf", "inputs", "samples"))
+        # A standalone GF profile may use the legacy one-file-per-population
+        # layout.  The canonical sample table supersedes that mutually
+        # exclusive option, so do not fingerprint the stale directory.
+        overridden_targets.add(("gf", "inputs", "sample_groups_dir"))
         overridden_targets.add(("load", "inputs", "population_dir"))
         overridden_targets.add(("mar", "inputs", "lonlat"))
     if "population_environment" in config.inputs:
@@ -1041,6 +1045,11 @@ def _apply_project_inputs(
 
     if module == "gf":
         set_target("inputs", "samples", "gf_samples")
+        if "gf_samples" in resolved_inputs and parser.has_section("inputs"):
+            # ``samples`` and ``sample_groups_dir`` are intentionally
+            # mutually exclusive in the GF module.  Prefer the generated
+            # canonical table when both appear in a legacy profile.
+            parser.remove_option("inputs", "sample_groups_dir")
     elif module == "load":
         set_target("inputs", "population_dir", "generated_population_dir")
         set_target("inputs", "predictors", "generated_load_predictors")

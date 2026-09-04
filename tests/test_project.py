@@ -258,6 +258,14 @@ class ProjectWorkflowTest(unittest.TestCase):
             mask = root / "mask.shp"; mask.write_text("fixture", encoding="utf-8")
             unld = root / "unld"; unld.mkdir()
             project_modules = {key: self._module_config(root, key) for key in ("gf", "rona", "mar", "load", "niche")}
+            # Simulate a legacy GF profile that still contains the old
+            # mutually-exclusive keep-list option.  The canonical table must
+            # win without leaving both options in the effective INI.
+            gf_text = project_modules["gf"].read_text(encoding="utf-8")
+            project_modules["gf"].write_text(
+                gf_text.replace("\n\n[analysis]", "\nsample_groups_dir = legacy_groups\n\n[analysis]"),
+                encoding="utf-8",
+            )
             project, output = self._project_config(root, project_modules)
             parser = configparser.ConfigParser(interpolation=None)
             parser.read(project, encoding="utf-8")
@@ -285,6 +293,8 @@ class ProjectWorkflowTest(unittest.TestCase):
             effective.read(output / "00_project" / "effective_configs" / "gf.ini", encoding="utf-8")
             self.assertEqual(Path(effective.get("inputs", "vcf")), adaptive)
             self.assertTrue((output / "00_project" / "generated_inputs" / "gf_samples.tsv").is_file())
+            self.assertTrue(effective.has_option("inputs", "samples"))
+            self.assertFalse(effective.has_option("inputs", "sample_groups_dir"))
             self.assertTrue((output / "00_project" / "generated_inputs" / "load_population_lists" / "P1").is_file())
 
             rona = configparser.ConfigParser(interpolation=None)
