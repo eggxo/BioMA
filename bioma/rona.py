@@ -16,7 +16,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 from .gf_frequency import InputError
 from .runtime import subprocess_environment
@@ -193,16 +193,20 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _ld_prune_records(unld_dir: Path) -> List[Dict[str, object]]:
+def _ld_prune_records(
+    unld_dir: Path, *, include_unique: bool = False
+) -> Union[List[Dict[str, object]], Tuple[List[Dict[str, object]], int]]:
     """Validate and fingerprint the per-BIO LD-pruning lists.
 
     RONA does not derive LD from the environment table.  The R script reads
     one ``LD_BIO*.prune.in`` list for each BIO and intersects those IDs with
     the frequency matrix.  Checking the lists before launching R makes that
     scientific dependency explicit and gives the run manifest a content hash
-    for every list.
+    for every list.  When ``include_unique`` is true, also return the number
+    of unique locus IDs in the union of all lists.
     """
     records: List[Dict[str, object]] = []
+    unique_loci = set()
     for bio in range(1, BIO_COUNT + 1):
         expected = unld_dir / "LD_BIO{}.prune.in".format(bio)
         path = expected if expected.is_file() else None
@@ -231,12 +235,17 @@ def _ld_prune_records(unld_dir: Path) -> List[Dict[str, object]]:
                 "loci": len(dict.fromkeys(ids)),
             }
         )
+        unique_loci.update(ids)
+    if include_unique:
+        # Keep the public record shape stable while allowing the run manifest
+        # to distinguish per-list counts from the union across BIO lists.
+        return records, len(unique_loci)
     return records
 
 
 def run_rona_workflow(config_path: Path, dry_run: bool = False, progress: Optional[Callable[[str], None]] = None) -> Dict[str, object]:
     config = load_rona_config(config_path)
-    ld_records = _ld_prune_records(config.unld_dir)
+    ld_records, unique_loci = _ld_prune_records(config.unld_dir, include_unique=True)
     all_scenarios = discover_rona_scenarios(config.future_climate)
     scenarios = _select(all_scenarios, config)
     manifest: Dict[str, object] = {
@@ -258,7 +267,8 @@ def run_rona_workflow(config_path: Path, dry_run: bool = False, progress: Option
             "ld_pruning": {
                 "description": "Per-BIO PLINK prune.in lists consumed by rona_compute.R",
                 "files": ld_records,
-                "total_unique_loci_listed": sum(int(row["loci"]) for row in ld_records),
+                "total_loci_listed": sum(int(row["loci"]) for row in ld_records),
+                "total_unique_loci_listed": unique_loci,
             }
         },
     }

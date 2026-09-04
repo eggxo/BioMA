@@ -20,6 +20,9 @@ class RonaInputSmokeTest(unittest.TestCase):
             self.assertEqual(len(records), 19)
             self.assertTrue(all(row["sha256"] for row in records))
             self.assertEqual(records[0]["loci"], 2)
+            unique_records, unique_count = _ld_prune_records(unld, include_unique=True)
+            self.assertEqual(len(unique_records), 19)
+            self.assertEqual(unique_count, 2)
             (unld / "LD_BIO19.prune.in").unlink()
             with self.assertRaisesRegex(Exception, "missing LD-pruning"):
                 _ld_prune_records(unld)
