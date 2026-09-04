@@ -51,6 +51,7 @@ class ReleaseBoundaryTest(unittest.TestCase):
         self.assertNotIn("expected_populations = 25", rona)
         load = (root / "workflow.load.example.ini").read_text(encoding="utf-8")
         self.assertIn("expected_future_files = 0", load)
+        self.assertNotIn("Four future mean-climate CSVs", load)
         wf = (root / "workflow.wfmoment.example.ini").read_text(encoding="utf-8")
         self.assertNotIn("_pade", wf)
 
