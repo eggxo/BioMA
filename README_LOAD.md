@@ -38,9 +38,18 @@ Run the complete workflow with:
 bin/bioma load workflow.load.example.ini
 ```
 
-For a first test, use `workflow.load.test.ini` (two outer splits, one CV
-repeat). Production settings in the example use more splits and workers; the
-full run is computationally expensive because each target performs a 50-point
+For a first portable test, generate the public demo and use its
+`configs/load.ini` (the smoke run stops at configuration validation):
+
+```bash
+python tests/data/demo/make_demo.py --outdir /tmp/bioma-demo
+bin/bioma load /tmp/bioma-demo/configs/load.ini --dry-run
+```
+
+The historical `workflow.load.test.ini` profile is kept only in a checkout
+for site-specific regression runs and is not included in release archives.
+Production settings in the example use more splits and workers; the full run
+is computationally expensive because each target performs a 50-point
 Latin-hypercube random-forest search within every split.
 
 ## Parameters

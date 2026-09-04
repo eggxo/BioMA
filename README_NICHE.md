@@ -14,8 +14,16 @@ bin/bioma niche workflow.niche.example.ini --dry-run
 bin/bioma niche workflow.niche.example.ini
 ```
 
-`workflow.niche.test.ini` is a small end-to-end test (four MaxEnt candidates,
-three folds, 500 background points, all configured periods/scenarios/GCMs).
+For a first portable test, generate the public demo and use its
+`configs/niche.ini` (the smoke run stops at configuration validation):
+
+```bash
+python tests/data/demo/make_demo.py --outdir /tmp/bioma-demo
+bin/bioma niche /tmp/bioma-demo/configs/niche.ini --dry-run
+```
+
+The historical `workflow.niche.test.ini` profile is kept only in a checkout
+for site-specific regression runs and is not included in release archives.
 The production template uses a larger tuning grid and 10,000 background
 points.
 
