@@ -62,6 +62,21 @@ class DoctorConfigTest(unittest.TestCase):
             context = _config_context(project)
             self.assertEqual(context["rscripts"], ["shared-r"])
 
+    def test_sparse_gdal_hints_keep_their_command_names(self):
+        """A single configured GDAL utility must not shift the others."""
+        with tempfile.TemporaryDirectory() as temporary:
+            config = Path(temporary) / "mar.ini"
+            config.write_text(
+                "[inputs]\nvcf = input.vcf\n\n"
+                "[parameters]\ncompute_python = custom-python\n\n"
+                "[doctor]\n"
+                "ogrinfo = custom-ogrinfo\n",
+                encoding="utf-8",
+            )
+            context = _config_context(config)
+            self.assertEqual(context["gdal_commands"], {"ogrinfo": "custom-ogrinfo"})
+            self.assertIn("custom-python", context["pythons"])
+
     def test_maxent_archive_check_is_read_only(self):
         with tempfile.TemporaryDirectory() as temporary:
             jar = Path(temporary) / "maxent.jar"

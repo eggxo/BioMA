@@ -172,6 +172,7 @@ def _config_context(config_path: Optional[Path]) -> Dict[str, Any]:
         "rscript_modules": {},
         "python_modules": {},
         "gdal": [],
+        "gdal_commands": {},
         "java": [],
         "maxent_jar": "",
         "config_error": "",
@@ -233,6 +234,19 @@ def _config_context(config_path: Optional[Path]) -> Dict[str, Any]:
         mapping = context[mapping_name]
         mapping.setdefault(value, set()).update(runtime_modules)
 
+    def add_gdal(command: str, value: str) -> None:
+        """Keep GDAL hints keyed by executable name.
+
+        A flat list loses the distinction between ``gdalinfo``,
+        ``gdallocationinfo`` and ``ogrinfo`` when only one of them is
+        configured.  Retain the legacy list for callers that inspect it, but
+        use this mapping for command dispatch.
+        """
+        if not value:
+            return
+        add_unique("gdal", value)
+        context["gdal_commands"].setdefault(command, value)
+
     shared_runtime_r = ""
     shared_runtime_py = ""
     if parser.has_section("shared"):
@@ -251,7 +265,7 @@ def _config_context(config_path: Optional[Path]) -> Dict[str, Any]:
         for key in ("rscript", "plot_rscript"):
             add_runtime("rscripts", _runtime_value(doctor.get(key, ""), base), modules)
         for key in ("gdalinfo", "gdallocationinfo", "ogrinfo"):
-            add_unique("gdal", _runtime_value(doctor.get(key, ""), base))
+            add_gdal(key, _runtime_value(doctor.get(key, ""), base))
         add_unique("java", _runtime_value(doctor.get("java", ""), base))
         jar = _resolve_value(doctor.get("maxent_jar", ""), base)
         if jar:
@@ -280,7 +294,7 @@ def _config_context(config_path: Optional[Path]) -> Dict[str, Any]:
             for key in ("gdalinfo", "gdallocationinfo", "ogrinfo"):
                 raw = section.get(key, "").strip()
                 if raw:
-                    add_unique("gdal", _runtime_value(raw, module_base))
+                    add_gdal(key, _runtime_value(raw, module_base))
             raw_java = section.get("java", "").strip()
             if raw_java:
                 add_unique("java", _runtime_value(raw_java, module_base))
@@ -305,6 +319,11 @@ def _config_context(config_path: Optional[Path]) -> Dict[str, Any]:
                 raw = section.get(key, "").strip()
                 if raw:
                     add_runtime("pythons", _runtime_value(raw, module_base), modules)
+        if standalone.has_section("doctor"):
+            doctor = standalone["doctor"]
+            for key in ("gdalinfo", "gdallocationinfo", "ogrinfo"):
+                add_gdal(key, _runtime_value(doctor.get(key, ""), module_base))
+            add_unique("java", _runtime_value(doctor.get("java", ""), module_base))
         if standalone.has_section("inputs"):
             raw_jar = standalone["inputs"].get("maxent_jar", "").strip()
             if raw_jar:
@@ -485,6 +504,7 @@ def run_doctor(
     configured_rs = list(context.get("rscripts", []))
     configured_py = list(context.get("pythons", []))
     configured_gdal = list(context.get("gdal", []))
+    gdal_commands = dict(context.get("gdal_commands", {}))
     configured_java = list(context.get("java", []))
     if rscript:
         configured_rs = [rscript]
@@ -494,6 +514,13 @@ def run_doctor(
         context["python_modules"] = {python: set(modules), str(Path(python).expanduser().resolve()): set(modules)}
     if gdalinfo:
         configured_gdal.insert(0, gdalinfo)
+        gdal_commands["gdalinfo"] = gdalinfo
+    if gdallocationinfo:
+        configured_gdal.append(gdallocationinfo)
+        gdal_commands["gdallocationinfo"] = gdallocationinfo
+    if ogrinfo:
+        configured_gdal.append(ogrinfo)
+        gdal_commands["ogrinfo"] = ogrinfo
     if java:
         configured_java.insert(0, java)
     configured_rs = list(dict.fromkeys(x for x in configured_rs if x))
@@ -541,7 +568,11 @@ def run_doctor(
     gdal_required = bool(modules.intersection({"gf", "rona", "niche", "load", "vulnerability"}))
     gdal_names = (("gdalinfo", gdalinfo), ("gdallocationinfo", gdallocationinfo), ("ogrinfo", ogrinfo))
     for index, (name, override) in enumerate(gdal_names):
-        configured = override or (configured_gdal[index] if index < len(configured_gdal) else "")
+        configured = override or gdal_commands.get(name, "")
+        # Keep compatibility with callers that provide a hand-built context
+        # containing only the historical flat ``gdal`` list.
+        if not configured and not gdal_commands and index < len(configured_gdal):
+            configured = configured_gdal[index]
         checks.append(_command_check(name, configured, name, gdal_required, ("--version",)))
 
     java_required = "niche" in modules
