@@ -33,6 +33,17 @@ SKIP_PARTS = {".git", "build", "dist", "__pycache__", "bioma_workflow.egg-info"}
 
 
 class ReleaseBoundaryTest(unittest.TestCase):
+    def test_public_gf_template_does_not_pin_species_site_count(self):
+        template = (Path(__file__).resolve().parents[1] / "workflow.example.ini").read_text(
+            encoding="utf-8"
+        )
+        expected_lines = [
+            line.strip()
+            for line in template.splitlines()
+            if line.strip().lower().startswith("expected_sites")
+        ]
+        self.assertEqual(expected_lines, ["expected_sites ="])
+
     def test_public_text_has_no_cluster_paths_or_credentials(self):
         root = Path(__file__).resolve().parents[1]
         violations = []
