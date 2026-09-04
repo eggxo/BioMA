@@ -225,9 +225,11 @@ Train a model directly from the standardized outputs of modules 1 and 2:
 bin/bioma gf-train \
   --frequencies results/gf_frequency/population_alt_frequency.tsv \
   --environment results/climate_prepare/population_environment.tsv \
-  --expected-sites 6140 \
   --outdir results/gf_train
 ```
+
+Use `--expected-sites` only when an independent site-count check is part of
+your study design; otherwise BioMA infers the count from the frequency table.
 
 Production defaults reproduce the historical 19-BIO setup: 500 trees, 1001 bins, correlation threshold 0.5, compact model storage, and `maxLevel = log2(0.368 * n_populations / 2)`. BioMA additionally fixes and records the random seed. Population rows are joined by `population_id`; row-number deletion is never used.
 
@@ -347,7 +349,9 @@ dependencies used by the module. Put its `Rscript` on `PATH` or set the
 
 ## Regression test
 
-The bundled fixture contains 50 adaptive variants, 175 samples, and 25 populations. Its expected frequencies are derived from the validated 6140-site matrix.
+The bundled fixture contains 50 adaptive variants, 175 samples, and 25
+populations. Its expected frequencies are derived from a small deterministic
+reference matrix and are independent of any production site count.
 
 ```bash
 python3 -m unittest discover -s tests -v
