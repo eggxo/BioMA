@@ -31,6 +31,9 @@
 - Record content-level SHA-256 fingerprints for canonical and module-referenced
   inputs; recursively fingerprint directories and shapefile sidecars in
   `00_project/input_manifest.json`.
+- Include user-supplied load calculator, RF-tuning, and prediction scripts in
+  the project input signature so changing implementation bytes cannot reuse a
+  stale result.
 - Check project and generated-input fingerprints before materializing
   compatibility files, preventing stale or partially rewritten metadata after
   an input change.
