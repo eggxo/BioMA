@@ -1,0 +1,22 @@
+name: bioma-plot
+channels:
+  - conda-forge
+dependencies:
+  # The plotting commands are launched by bin/bioma from this environment.
+  - python=3.10
+  - pip
+  - gdal
+  - openjdk=17
+  - r-base=4.4
+  - r-cowplot
+  - r-data.table
+  - r-dplyr
+  - r-ggplot2
+  - r-mgcv
+  - r-patchwork
+  - r-ragg
+  - r-raster
+  - r-readr
+  - r-sf
+  - r-tibble
+  - r-tidyr

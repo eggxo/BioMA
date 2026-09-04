@@ -1,0 +1,11 @@
+{
+  "fixture": "gf_frequency_50",
+  "sites": 50,
+  "samples": 175,
+  "populations": 25,
+  "source_vcf": null,
+  "source_vcf_sha256": null,
+  "groups_dir": null,
+  "reference_frequency": null,
+  "reference_frequency_sha256": "44265baa22c92cc618bd7193741c12fa0a234942451d4f1b35117ee5a17977a3"
+}

@@ -1,0 +1,42 @@
+name: BioMA checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  python-contracts:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install package
+        run: python -m pip install --upgrade pip && python -m pip install .
+      - name: Compile Python sources
+        run: python -m compileall -q bioma tests
+      - name: Run contract and demo tests
+        run: python -m unittest discover -s tests -v
+
+  packaging:
+    name: Source package contents
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build distributions
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build --sdist --wheel
+      - name: Check lock and demo are in source archive
+        run: |
+          tar -tzf dist/*.tar.gz | grep -E '(^|/)conda-lock.yml$'
+          tar -tzf dist/*.tar.gz | grep -E 'tests/data/demo/make_demo.py$'

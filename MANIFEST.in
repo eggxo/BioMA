@@ -1,0 +1,16 @@
+include LICENSE README.md INSTALL.md INPUTS.md ARCHITECTURE.md CHANGELOG.md
+include architecture.dot architecture.svg architecture.png
+include environment.yml environment-plot.yml conda-lock.yml
+include workflow.example.ini workflow.*.example.ini
+exclude workflow.*.test.ini workflow.50test.ini workflow.6140.ini
+recursive-include bin *
+recursive-include bioma/scripts *.R *.py
+recursive-include tests *.py *.R
+recursive-include tests/data/demo *
+recursive-include tests/data/gf_frequency_50 *
+global-exclude __pycache__/*
+global-exclude *.py[cod]
+global-exclude *.tgz
+global-exclude *.tar.gz
+global-exclude *.zip
+global-exclude *.whl

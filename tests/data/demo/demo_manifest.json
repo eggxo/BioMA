@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "purpose": "portable BioMA smoke fixture",
+  "generator": "make_demo.py",
+  "server_independent": true,
+  "genomic_streams": {
+    "adaptive": "adaptive_sites.vcf",
+    "mar": "whole_genome.mis0.9.maf0.00001.vcf",
+    "load": "load_3vcf/"
+  },
+  "raster_note": "Run make_demo.py --valid-rasters to create readable GeoTIFFs."
+}

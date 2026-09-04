@@ -1,0 +1,6 @@
+##fileformat=VCFv4.2
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	S1	S2	S3	S4	S5	S6
+1	100	adaptive_1	A	G	.	PASS	.	GT	0/0	0/1	1/1	0/1	0/0	1/1
+1	200	adaptive_2	A	G	.	PASS	.	GT	0/1	0/1	0/0	1/1	0/1	0/0
+1	300	adaptive_3	A	G	.	PASS	.	GT	1/1	0/0	0/1	0/0	1/1	0/1
+1	400	adaptive_4	A	G	.	PASS	.	GT	0/0	1/1	0/1	1/1	0/0	0/1

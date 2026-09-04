@@ -1,0 +1,61 @@
+digraph BioMA {
+  graph [rankdir=LR, newrank=true, splines=ortho, bgcolor="white", pad="0.25", nodesep="0.38", ranksep="1.05", fontname="Arial"];
+  node [shape=box, style="rounded,filled", fontname="Arial", fontsize=10, color="#697386", fillcolor="#F7F8FA", margin="0.16,0.09"];
+  edge [color="#687385", arrowsize=0.7, fontname="Arial", fontsize=8];
+
+  // Column 1: files and shared tables, including the generated frequency table.
+  adaptive [label="适应性位点 VCF", fillcolor="#FCE4D6"];
+  pop_tables [label="人口与环境表\npopulation_samples.tsv：个体-群体\npopulation_environment.tsv：每群体一行 + BIO1-BIO19", fillcolor="#FFF2CC"];
+  frequency [label="适应性位点频率表\nALT（默认，自动生成）", fillcolor="#D9EAF7"];
+  whole [label="全基因组 VCF\nBeagle mis0.9 + maf0.00001", fillcolor="#F4CCCC"];
+  load_vcf [label="derived + SIFT\nloadM/loadD VCF", fillcolor="#F4CCCC"];
+  climate [label="共享环境资源\n当代 / 未来 BIO 栅格 + 物种 mask", fillcolor="#E2F0D9"];
+  species [label="物种参数\npi / FST / z / 面积", fillcolor="#EADCF8"];
+
+  // Column 2: calculations. MAR and WFmoments are intentionally adjacent.
+  calc_title [label="计算模块", shape=plaintext, fontcolor="#44546A", fontsize=13];
+  gf [label="GF\n训练与 climate offset", fillcolor="#D9EAF7"];
+  rona [label="RONA\n逐 BIO 回归与 ensemble", fillcolor="#D9EAF7"];
+  load [label="loadM / loadD\n遗传负荷预测", fillcolor="#D9EAF7"];
+  niche [label="MaxEnt\n生态位与未来适生性", fillcolor="#D9EAF7"];
+  mar [label="MAR\n全基因组遗传损失", fillcolor="#D9EAF7"];
+  wf [label="WFmoments\n2-D deme 多样性损失", fillcolor="#D9EAF7"];
+
+  // Column 3: summaries.
+  summary_title [label="结果汇总", shape=plaintext, fontcolor="#44546A", fontsize=13];
+  vuln [label="综合脆弱性\nGF + RONA + load + niche", fillcolor="#C6E0B4"];
+  diversity_area [label="遗传多样性与栖息地面积关系\nMAR + WFmoments", fillcolor="#C6E0B4"];
+
+  { rank=same; input_title; adaptive; pop_tables; frequency; whole; load_vcf; climate; species; }
+  { rank=same; calc_title; gf; rona; load; niche; mar; wf; }
+  { rank=same; summary_title; vuln; diversity_area; }
+  input_title [label="输入文件", shape=plaintext, fontcolor="#44546A", fontsize=13];
+  input_title -> adaptive -> pop_tables -> frequency -> whole -> load_vcf -> climate -> species [style=invis, weight=20];
+  calc_title -> gf -> rona -> load -> niche -> mar -> wf [style=invis, weight=20];
+  summary_title -> vuln -> diversity_area [style=invis, weight=20];
+
+  adaptive -> frequency [label="计算群体频率"];
+  pop_tables -> frequency;
+  frequency -> gf [label="GF train"];
+  frequency -> rona [label="同一频率表"];
+  pop_tables -> gf;
+  pop_tables -> rona;
+  pop_tables -> load;
+  pop_tables -> niche;
+  pop_tables -> mar;
+  whole -> mar;
+  load_vcf -> load;
+  climate -> gf;
+  climate -> rona;
+  climate -> load;
+  climate -> niche;
+  climate -> wf;
+  species -> wf;
+
+  gf -> vuln;
+  rona -> vuln;
+  load -> vuln;
+  niche -> vuln;
+  mar -> diversity_area;
+  wf -> diversity_area;
+}

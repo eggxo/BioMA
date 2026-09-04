@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bioma-workflow"
+version = "0.8.0"
+description = "Auditable multidimensional climate-vulnerability workflow"
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.8"
+dependencies = []
+
+[project.scripts]
+bioma = "bioma.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["bioma*"]
+
+[tool.setuptools.package-data]
+bioma = ["scripts/*.R", "scripts/*.py"]

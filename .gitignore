@@ -1,0 +1,38 @@
+# Python and packaging output
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+
+# Local workflow results and temporary project metadata
+results/
+test-results/
+00_project/
+_bioma_backups/
+*.log
+*.Rhistory
+*.RData
+
+# Cluster-only regression profiles; the portable demo is the public test path.
+workflow.*.test.ini
+workflow.50test.ini
+workflow.6140.ini
+
+# Generated release archives and local lock regeneration scratch files
+*.tgz
+*.tar.gz
+*.zip
+*.whl
+conda-*.lock
+!conda-lock.yml
+*.tmp
+
+# Local coverage and editor metadata
+.coverage
+coverage.xml
+.mypy_cache/
+.ruff_cache/
+.DS_Store
+Thumbs.db

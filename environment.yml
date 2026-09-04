@@ -1,0 +1,40 @@
+name: bioma
+channels:
+  - conda-forge
+platforms:
+  # The validated production workflow runs on the Linux cluster.  Add a
+  # platform explicitly before regenerating a lock for another architecture.
+  - linux-64
+dependencies:
+  - python=3.10
+  - pip
+  - gdal
+  - openjdk=17
+  - r-base=4.4
+  - r-cowplot
+  - r-data.table
+  - r-dismo
+  - r-dplyr
+  - r-fnn
+  - r-future
+  - r-geosphere
+  - r-ggplot2
+  - r-mgcv
+  - r-patchwork
+  - r-plotrix
+  - r-ragg
+  - r-ranger
+  - r-raster
+  - r-readr
+  - r-remotes
+  - r-rsample
+  - r-sf
+  - r-terra
+  - r-tibble
+  - r-tidymodels
+  - r-tidyr
+  - pip:
+      - numpy
+      - pandas
+      - rasterio
+      - git+https://github.com/jeffspence/wfmoments@46023ab24ba3e11f8f6983a84fed0f404ad8bbf2
