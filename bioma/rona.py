@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 from .gf_frequency import InputError
+from .provenance import attach_input_fingerprints
 from .runtime import subprocess_environment
 
 
@@ -248,6 +249,11 @@ def run_rona_workflow(config_path: Path, dry_run: bool = False, progress: Option
     ld_records, unique_loci = _ld_prune_records(config.unld_dir, include_unique=True)
     all_scenarios = discover_rona_scenarios(config.future_climate)
     scenarios = _select(all_scenarios, config)
+    script_dir = Path(__file__).resolve().parent / "scripts"
+    compute_script = script_dir / "rona_compute.R"
+    plot_script = script_dir / "rona_plot.R"
+    if not compute_script.is_file() or not plot_script.is_file():
+        raise InputError("RONA scripts are missing from {}".format(script_dir))
     manifest: Dict[str, object] = {
         "module": "rona-workflow",
         "status": "planned" if dry_run else "running",
@@ -272,15 +278,22 @@ def run_rona_workflow(config_path: Path, dry_run: bool = False, progress: Option
             }
         },
     }
+    attach_input_fingerprints(
+        manifest,
+        {
+            "alt_frequency": config.alt_frequency,
+            "unld_dir": config.unld_dir,
+            "environment": config.environment,
+            "future_climate": config.future_climate,
+            "mask": config.mask,
+            "compute_script": compute_script,
+            "plot_script": plot_script,
+        },
+    )
     config.output_dir.mkdir(parents=True, exist_ok=True)
     if dry_run:
         (config.output_dir / "rona_dry_run.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
         return manifest
-    script_dir = Path(__file__).resolve().parent / "scripts"
-    compute_script = script_dir / "rona_compute.R"
-    plot_script = script_dir / "rona_plot.R"
-    if not compute_script.is_file() or not plot_script.is_file():
-        raise InputError("RONA scripts are missing from {}".format(script_dir))
     started = time.time()
     if progress:
         progress("RONA compute: {} scenarios".format(len(scenarios)))

@@ -24,6 +24,7 @@ from .gf_frequency import InputError, build_population_frequency
 from .gf_offset import compute_gf_offsets, parse_forward_radii
 from .gf_train import DEFAULT_PREDICTORS, train_gradient_forest
 from .offset_plot import plot_offsets
+from .provenance import attach_input_fingerprints
 
 
 @dataclass(frozen=True)
@@ -331,7 +332,12 @@ def _source_snapshot(config: WorkflowConfig, plan: WorkflowPlan) -> Dict[str, ob
     for path in dict.fromkeys(raster_paths):
         stat = path.stat()
         raster_rows.append(
-            {"path": str(path), "size_bytes": stat.st_size, "mtime_ns": stat.st_mtime_ns}
+            {
+                "path": str(path),
+                "size_bytes": stat.st_size,
+                "mtime_ns": stat.st_mtime_ns,
+                "sha256": _sha256_file(path),
+            }
         )
     sample_group_rows = []
     if config.sample_groups_dir is not None:
@@ -468,9 +474,20 @@ def run_gf_workflow(
     source_snapshot = _source_snapshot(config, plan)
     signature_payload = {"config": config_payload, "sources": source_snapshot}
     workflow_signature = _json_sha256(signature_payload)
+    workflow_inputs = {
+        "vcf": config.vcf,
+        "samples": config.samples,
+        "sample_groups_dir": config.sample_groups_dir,
+        "coordinates": config.coordinates,
+        "present_climate": config.present_climate,
+        "future_climate": config.future_climate,
+        "current_mask": config.current_mask,
+        "future_mask": config.future_mask,
+        "workflow_script": Path(__file__).resolve(),
+    }
     planned_stages = 3 + len(plan.scenarios) + len(plan.periods) * len(plan.ssps) + len(plan.periods)
     if dry_run:
-        return {
+        manifest = {
             "module": "gf-workflow",
             "bioma_version": __version__,
             "engineering_status": "planned",
@@ -479,6 +496,8 @@ def run_gf_workflow(
             "selection": plan.payload(),
             "counts": {"scenarios": len(plan.scenarios), "planned_stages": planned_stages},
         }
+        attach_input_fingerprints(manifest, workflow_inputs)
+        return manifest
 
     announce = progress or (lambda message: None)
     output_root = config.output_dir
@@ -726,6 +745,7 @@ def run_gf_workflow(
         },
         "runtime": {"elapsed_seconds": time.monotonic() - started},
     }
+    attach_input_fingerprints(workflow_manifest, workflow_inputs)
     _write_json_atomic(output_root / "run_manifest.json", workflow_manifest)
     state["status"] = "completed"
     state["updated_at_utc"] = datetime.now(timezone.utc).isoformat()

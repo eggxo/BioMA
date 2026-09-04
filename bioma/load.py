@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
 from .gf_frequency import InputError
+from .provenance import attach_input_fingerprints
 from .runtime import subprocess_environment
 
 
@@ -180,6 +181,14 @@ def run_load_workflow(config_path: Path, dry_run=False, progress: Optional[Calla
     nonsyn = _find_vcf(cfg.vcf_dir, "strict.nonsynonymous.vcf")
     strict_del = _find_vcf(cfg.vcf_dir, "strict.deleterious_plain.vcf")
     relax_del = _find_vcf(cfg.vcf_dir, "relaxed.deleterious_with_warning.vcf")
+    future_files = sorted(cfg.future_dir.glob(cfg.future_pattern))
+    if not future_files:
+        raise InputError("No future files matching {} under {}".format(cfg.future_pattern, cfg.future_dir))
+    if cfg.expected_future_files and len(future_files) != cfg.expected_future_files:
+        raise InputError("Expected {} future files matching {} under {}, found {}".format(cfg.expected_future_files, cfg.future_pattern, cfg.future_dir, len(future_files)))
+    plot_script = Path(__file__).resolve().parent / "scripts" / "load_plot.R"
+    if not plot_script.is_file():
+        raise InputError("Load plotting script does not exist: {}".format(plot_script))
     site_counts = {
         "strict_synonymous": _count_vcf_records(syn),
         "strict_nonsynonymous": _count_vcf_records(nonsyn),
@@ -195,6 +204,23 @@ def run_load_workflow(config_path: Path, dry_run=False, progress: Optional[Calla
             "future_prediction": {"path": str(cfg.predict_script), "sha256": _sha256(cfg.predict_script)},
         },
     }
+    input_paths = {
+        "vcf_dir": cfg.vcf_dir,
+        "vcf_strict_synonymous": syn,
+        "vcf_strict_nonsynonymous": nonsyn,
+        "vcf_strict_deleterious": strict_del,
+        "vcf_relaxed_deleterious": relax_del,
+        "population_dir": cfg.population_dir,
+        "predictors": cfg.predictors,
+        "future_dir": cfg.future_dir,
+        "mask": cfg.mask,
+        "calculator_script": cfg.calc_script,
+        "rf_tuning_script": cfg.rf_script,
+        "future_prediction_script": cfg.predict_script,
+        "plot_script": plot_script,
+    }
+    input_paths.update({"future_file_{}".format(index + 1): path for index, path in enumerate(future_files)})
+    attach_input_fingerprints(manifest, input_paths)
     if dry_run:
         cfg.output_dir.mkdir(parents=True, exist_ok=True); (cfg.output_dir / "load_dry_run.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8"); return manifest
     started = time.time(); loads_dir = cfg.output_dir / "loads"; training_csv = cfg.output_dir / "pop_geo_niche_predictors_from_TSS.csv"
@@ -224,13 +250,7 @@ def run_load_workflow(config_path: Path, dry_run=False, progress: Optional[Calla
         if result.returncode: raise InputError("RF tuning failed for {}; see {}.rf.log".format(target, target))
         rf_dirs[target] = cfg.output_dir / ("RF_" + re.sub(r"[^A-Za-z0-9]+", "_", target))
     if progress: progress("Predicting configured future scenarios and drawing figures")
-    plot_script = Path(__file__).resolve().parent / "scripts" / "load_plot.R"
     pred_script = cfg.predict_script
-    future_files = sorted(cfg.future_dir.glob(cfg.future_pattern))
-    if not future_files:
-        raise InputError("No future files matching {} under {}".format(cfg.future_pattern, cfg.future_dir))
-    if cfg.expected_future_files and len(future_files) != cfg.expected_future_files:
-        raise InputError("Expected {} future files matching {} under {}, found {}".format(cfg.expected_future_files, cfg.future_pattern, cfg.future_dir, len(future_files)))
     pred_dir = cfg.output_dir / "future_predictions"; pred_dir.mkdir(parents=True, exist_ok=True)
     for target in targets:
         metrics_path = rf_dirs[target] / ("RF_metrics_by_split_" + target + ".csv")

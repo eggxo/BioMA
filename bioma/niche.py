@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
 from .gf_frequency import InputError
+from .provenance import attach_input_fingerprints
 from .runtime import subprocess_environment
 
 
@@ -255,6 +256,11 @@ def run_niche_workflow(config_path: Path, dry_run: bool = False, progress: Optio
     if not current_ids:
         raise InputError("No BIO tif files in current_env_dir: {}".format(cfg.current_env_dir))
     future_dirs = _future_dirs(cfg)
+    script_dir = Path(__file__).resolve().parent / "scripts"
+    pipeline = script_dir / "niche_pipeline.R"
+    plotter = script_dir / "niche_plot.R"
+    if not pipeline.is_file() or not plotter.is_file():
+        raise InputError("Niche scripts are missing from {}".format(script_dir))
     jar_input = None
     if cfg.maxent_jar:
         jar_input = {
@@ -262,6 +268,17 @@ def run_niche_workflow(config_path: Path, dry_run: bool = False, progress: Optio
             "sha256": hashlib.sha256(cfg.maxent_jar.read_bytes()).hexdigest(),
         }
     manifest: Dict[str, object] = {"module": "niche-workflow", "status": "planned" if dry_run else "running", "config": cfg.payload(), "inputs": {"maxent_jar": jar_input}, "discovery": {"current_bio": current_ids, "future_directories": {k: str(v) for k, v in future_dirs.items()}}}
+    input_paths = {
+        "occurrence_csv": cfg.occurrence_csv,
+        "current_env_dir": cfg.current_env_dir,
+        "future_root": cfg.future_root,
+        "mask_shp": cfg.mask_shp,
+        "maxent_jar": cfg.maxent_jar,
+        "pipeline_script": pipeline,
+        "plot_script": plotter,
+    }
+    input_paths.update({"future_scenario__{}".format(key): path for key, path in future_dirs.items()})
+    attach_input_fingerprints(manifest, input_paths)
     if dry_run:
         cfg.output_dir.mkdir(parents=True, exist_ok=True)
         (cfg.output_dir / "niche_dry_run.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -270,9 +287,6 @@ def run_niche_workflow(config_path: Path, dry_run: bool = False, progress: Optio
     started = time.time()
     cfg.output_dir.mkdir(parents=True, exist_ok=True)
     spec = _write_spec(cfg, future_dirs)
-    script_dir = Path(__file__).resolve().parent / "scripts"
-    pipeline = script_dir / "niche_pipeline.R"
-    plotter = script_dir / "niche_plot.R"
     if progress:
         progress("Tuning MaxEnt variables and feature parameters")
     result = subprocess.run([cfg.rscript, str(pipeline), str(spec)], cwd=str(cfg.work_dir), text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=subprocess_environment(cfg.rscript))

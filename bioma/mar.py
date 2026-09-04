@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Callable, Dict, Optional, Sequence, Tuple
 
 from .gf_frequency import InputError
+from .provenance import attach_input_fingerprints
 from .runtime import subprocess_environment
 
 
@@ -117,13 +118,25 @@ def count_vcf_sites(path: Path) -> int:
 def run_mar_workflow(config_path: Path, dry_run: bool = False, progress: Optional[Callable[[str], None]] = None) -> Dict[str, object]:
     config = load_mar_config(config_path)
     maxsnps = config.maxsnps if config.maxsnps is not None else count_vcf_sites(config.vcf)
+    script = Path(__file__).resolve().parent / "scripts" / "mar_compute.R"
+    plot_script = Path(__file__).resolve().parent / "scripts" / "mar_plot.R"
+    if not script.is_file() or not plot_script.is_file():
+        raise InputError("MAR scripts are missing from {}".format(script.parent))
     manifest: Dict[str, object] = {"module": "mar-workflow", "status": "planned" if dry_run else "running", "config": config.payload(), "resolved_maxsnps": maxsnps}
+    attach_input_fingerprints(
+        manifest,
+        {
+            "vcf": config.vcf,
+            "lonlat": config.lonlat,
+            "scenario_file": config.scenario_file,
+            "compute_script": script,
+            "plot_script": plot_script,
+        },
+    )
     config.output_dir.mkdir(parents=True, exist_ok=True)
     if dry_run:
         (config.output_dir / "mar_dry_run.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
         return manifest
-    script = Path(__file__).resolve().parent / "scripts" / "mar_compute.R"
-    plot_script = Path(__file__).resolve().parent / "scripts" / "mar_plot.R"
     started = time.time()
     if progress: progress("MAR pipeline: scheme={}, maxsnps={}, nrep={}".format(config.scheme, maxsnps, config.nrep))
     args = [config.rscript, str(script), str(config.name), str(config.output_dir), str(config.vcf), str(config.lonlat), config.scheme, str(config.nrep), str(config.xfrac), "TRUE" if config.quorum else "FALSE", str(config.randseed), str(maxsnps), ",".join(config.marsteps)]

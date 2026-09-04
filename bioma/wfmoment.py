@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Callable, Dict, Optional, Sequence
 
 from .gf_frequency import InputError
+from .provenance import attach_input_fingerprints
 from .runtime import subprocess_environment
 
 
@@ -179,11 +180,44 @@ def run_wfmoment_workflow(
 ) -> Dict[str, object]:
     config = WFMomentConfig(config_path)
     config.output_dir.mkdir(parents=True, exist_ok=True)
+    script_dir = Path(__file__).resolve().parent / "scripts"
+    compute_script = script_dir / "wfmoment_compute.py"
+    plot_script = script_dir / "wfmoment_plot.R"
+    if not compute_script.is_file() or not plot_script.is_file():
+        raise InputError("WFmoments scripts are missing from {}".format(script_dir))
     manifest: Dict[str, object] = {
         "module": "wfmoment-2d-deme",
         "status": "planned" if dry_run else "running",
         "config": config.payload(),
     }
+    input_paths = {
+        "current_raster": config.current_raster,
+        "pi_file": config.pi_file,
+        "structure_file": config.structure_file,
+        "param_file": config.param_file,
+        "area_file": config.area_file,
+        "future_masks_json": config.future_masks_json,
+        "compute_script": compute_script,
+        "plot_script": plot_script,
+    }
+    # A future-mask mapping is itself a small input table, but its referenced
+    # rasters are scientific inputs too.  Record them individually so changing
+    # a raster cannot be hidden behind an unchanged JSON mapping.
+    if config.future_masks_json:
+        try:
+            mapping = json.loads(config.future_masks_json.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as error:
+            raise InputError("Cannot read future_masks_json: {}".format(error))
+        if not isinstance(mapping, dict):
+            raise InputError("future_masks_json must contain an object mapping scenarios to rasters")
+        for index, raw_path in enumerate(mapping.values(), start=1):
+            if not isinstance(raw_path, str) or not raw_path.strip():
+                raise InputError("future_masks_json contains an invalid raster path")
+            mask_path = Path(raw_path).expanduser()
+            if not mask_path.is_absolute():
+                mask_path = config.future_masks_json.parent / mask_path
+            input_paths["future_mask_{}".format(index)] = mask_path.resolve()
+    attach_input_fingerprints(manifest, input_paths)
     if dry_run:
         (config.output_dir / "wfmoment_dry_run.json").write_text(
             json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8"
@@ -191,7 +225,6 @@ def run_wfmoment_workflow(
         return manifest
 
     started = time.time()
-    compute_script = Path(__file__).resolve().parent / "scripts" / "wfmoment_compute.py"
     compute_args = [
         config.compute_python, str(compute_script),
         "--current-raster", str(config.current_raster),
@@ -224,7 +257,6 @@ def run_wfmoment_workflow(
         progress("WFmoments 2-D deme calculation ({}, {} loss)".format(config.species, config.loss_mode))
     _run(compute_args, config.output_dir / "wfmoment_compute.log")
 
-    plot_script = Path(__file__).resolve().parent / "scripts" / "wfmoment_plot.R"
     plot_args = [
         config.rscript, str(plot_script),
         str(config.output_dir / "curve_summary.tsv"),
