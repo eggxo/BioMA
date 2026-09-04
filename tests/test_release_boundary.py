@@ -44,6 +44,16 @@ class ReleaseBoundaryTest(unittest.TestCase):
         ]
         self.assertEqual(expected_lines, ["expected_sites ="])
 
+    def test_public_templates_do_not_pin_species_counts_or_names(self):
+        root = Path(__file__).resolve().parents[1]
+        rona = (root / "workflow.rona.example.ini").read_text(encoding="utf-8")
+        self.assertIn("expected_populations =", rona)
+        self.assertNotIn("expected_populations = 25", rona)
+        load = (root / "workflow.load.example.ini").read_text(encoding="utf-8")
+        self.assertIn("expected_future_files = 0", load)
+        wf = (root / "workflow.wfmoment.example.ini").read_text(encoding="utf-8")
+        self.assertNotIn("_pade", wf)
+
     def test_public_text_has_no_cluster_paths_or_credentials(self):
         root = Path(__file__).resolve().parents[1]
         violations = []
