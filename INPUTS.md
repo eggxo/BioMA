@@ -65,10 +65,9 @@ load predictors 和 MaxEnt occurrence 等兼容文件由 BioMA 写入
   只提供 BIO 环境预测值，不能替代基因型 LD 筛选；每个列表的大小和
   SHA-256 会写入 RONA manifest。后续若自动从 VCF 生成 LD，窗口、步长和
   r² 必须作为显式参数记录，不能从环境表猜测。
-- `environment`：与 GF 相同的群体环境表。服务器中 GF 与 RONA 两份文件
-  SHA-256 都是
-  `cc7520e70e86334bc70d844c0aca3c3586a6661044ab4f833d82d7f8a50d42c0`，
-  下一步可以只保留一份。
+- `environment`：与 GF 相同的群体环境表。项目模式下 GF 与 RONA 会引用
+  同一份 canonical 表，`input_manifest.json` 会记录并验证其内容指纹；下一步
+  可以只保留一份。
 - `future_climate`：未来 cut 栅格根目录；场景目录和 BIO 文件名需符合
   RONA 脚本的规则。
 - `mask`：绘图 mask，可与 GF/生态位共用。
@@ -82,8 +81,8 @@ load predictors 和 MaxEnt occurrence 等兼容文件由 BioMA 写入
 - `scenario_file`：可选的面积/情景表，仅用于曲线上的情景点。
 
 MAR 的逐样本坐标可由 GF 的样本设计和群体坐标自动生成。MAR VCF 与 GF
-VCF 只有在位点集合、样本名和基因型编码完全一致时才可共用；当前 6410
-位点 MAR VCF 和 6140 位点 GF VCF 应继续分开。
+VCF 只有在位点集合、样本名和基因型编码完全一致时才可共用；通常应根据
+各自的过滤和位点处理历史分开保存，不要依赖固定的位点数量。
 
 ### 4. loadM/loadD
 
@@ -115,8 +114,8 @@ VCF 直接合并；它们对应不同的注释类别和 load 计算语义。未�
   可由环境表按坐标去重生成。
 - `current_env_dir`：当代 BIO1--BIO19 TIFF 目录。
 - `future_root`：未来 `<period>-<ssp>-<gcm>` 目录集合。
-- `mask_shp`：物种 mask；可与 GF/RONA 共用。当前 GF 和 MAXENT 的 mask
-  `.shp` 文件 SHA-256 相同。
+- `mask_shp`：物种 mask；可与 GF/RONA 共用。若多个模块使用同一份 mask，
+  项目 manifest 会通过内容哈希确认，而不是依赖文件名。
 - `maxent_jar`：用户依法取得的 MaxEnt jar。它不随 BioMA 分发，运行时会
   使用该文件并记录校验值。
 
