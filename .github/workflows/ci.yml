@@ -40,5 +40,8 @@ jobs:
         run: |
           tar -tzf dist/*.tar.gz | grep -E '(^|/)conda-lock.yml$'
           tar -tzf dist/*.tar.gz | grep -E 'tests/data/demo/make_demo.py$'
+          for doc in README_LOAD.md README_MAR.md README_NICHE.md README_RONA.md CONTRIBUTING.md; do
+            tar -tzf dist/*.tar.gz | grep -E "(^|/)$doc$"
+          done
           if tar -tzf dist/*.tar.gz | grep -E 'workflow\..*(test|6140)\.ini$'; then exit 1; fi
           if tar -tzf dist/*.tar.gz | grep -E '\.(tgz|tar\.gz|zip|whl)$'; then exit 1; fi
