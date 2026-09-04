@@ -2,7 +2,7 @@
 
 This directory is deliberately independent of the production cluster.  It is
 small enough for CI and for a first installation check, and contains no
-`/usr_storage` paths or species-private files.
+cluster-specific paths or species-private files.
 
 Create a disposable demo project with:
 

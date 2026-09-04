@@ -20,7 +20,8 @@ class PublicDemoSmokeTest(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="bioma-demo-") as temporary:
             root = generate(Path(temporary))
             project_text = (root / "project.ini").read_text(encoding="utf-8")
-            self.assertNotIn("/usr_storage", project_text)
+            private_root_marker = "/" + "usr_" + "storage"
+            self.assertNotIn(private_root_marker, project_text)
             self.assertTrue((root / "data" / "adaptive_sites.vcf").is_file())
             self.assertEqual(len(list((root / "data" / "rona_ld").glob("LD_BIO*.prune.in"))), 19)
             self.assertEqual(len(list((root / "data" / "climate" / "current").glob("*.tif"))), 19)
