@@ -43,6 +43,9 @@ and other sidecar files are included automatically. The project signature uses
 these content fingerprints, not paths alone; changing an input is rejected
 before generated compatibility files are rewritten unless `--overwrite` is
 given.
+If the project provenance sidecar is missing while module results remain,
+BioMA also refuses to adopt those results; use a new output directory or
+explicitly pass `--overwrite` after confirming the inputs.
 
 Shared species, climate-model, SSP, period, and seed values can be set once in
 `[shared]`. The vulnerability configuration may use `auto` for GF, RONA, load,
