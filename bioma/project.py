@@ -1335,6 +1335,38 @@ def run_project_workflow(
         announce("Archived invalid project metadata to {}".format(archived_project))
     effective_dir = project_dir / "effective_configs"
     source_dir = project_dir / "source_configs"
+    resolved_path = project_dir / "resolved_project.json"
+    if not overwrite and not resolved_path.is_file():
+        invalid_outputs = [
+            output_root / name
+            for name in MODULE_DIRECTORIES.values()
+            if (output_root / name).exists() and not (output_root / name).is_dir()
+        ]
+        if invalid_outputs:
+            raise InputError(
+                "Existing module output path is invalid: {}".format(
+                    ", ".join(str(path) for path in invalid_outputs)
+                )
+            )
+        # Never adopt pre-existing module outputs when the project provenance
+        # sidecar is missing.  Reconstructing metadata at that point would
+        # make an old result look as though it came from the current inputs.
+        metadata_entries = list(project_dir.iterdir()) if project_dir.is_dir() else []
+        stale_outputs = [
+            output_root / name
+            for name in MODULE_DIRECTORIES.values()
+            if (output_root / name).exists()
+        ]
+        if metadata_entries or stale_outputs:
+            details = [str(path) for path in stale_outputs]
+            if metadata_entries:
+                details.append(str(project_dir))
+            raise InputError(
+                "Project provenance is incomplete; existing results cannot be reused without "
+                "00_project/resolved_project.json (found {}). Use --overwrite or choose a new output_dir.".format(
+                    ", ".join(details)
+                )
+            )
     _validate_project_input_paths(config)
     sources: Dict[str, Dict[str, str]] = {}
 
@@ -1376,7 +1408,6 @@ def run_project_workflow(
         "bioma_version": __version__,
     }
     input_signature = _json_sha256(signature_payload)
-    resolved_path = project_dir / "resolved_project.json"
     if resolved_path.is_file():
         try:
             existing = json.loads(resolved_path.read_text(encoding="utf-8"))

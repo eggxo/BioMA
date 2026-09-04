@@ -123,6 +123,17 @@ class ProjectWorkflowTest(unittest.TestCase):
                 self.assertEqual(effective_path.read_bytes(), old_effective)
                 self.assertEqual(resolved_path.read_bytes(), old_resolved)
 
+    def test_missing_project_provenance_does_not_adopt_old_module_outputs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            gf = self._module_config(root, "gf")
+            project, output = self._project_config(root, {"gf": gf})
+            with patch("bioma.project._runner", return_value=self._fake_runner):
+                run_project_workflow(project)
+                (output / "00_project" / "resolved_project.json").unlink()
+                with self.assertRaisesRegex(InputError, "Project provenance is incomplete"):
+                    run_project_workflow(project)
+
     def test_overwrite_archives_results_and_project_metadata(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
