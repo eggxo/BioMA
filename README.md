@@ -47,6 +47,12 @@ If the project provenance sidecar is missing while module results remain,
 BioMA also refuses to adopt those results; use a new output directory or
 explicitly pass `--overwrite` after confirming the inputs.
 
+Standalone module commands apply the same content-level provenance contract:
+their `run_manifest.json` includes `input_fingerprints` and an aggregate
+`input_signature_sha256`. Directory inputs are recorded recursively, and
+shapefile sidecars are included as part of the logical dataset. This makes a
+standalone run auditable even when it is not launched through `bioma project`.
+
 Shared species, climate-model, SSP, period, and seed values can be set once in
 `[shared]`. The vulnerability configuration may use `auto` for GF, RONA, load,
 and niche inputs; BioMA then connects the canonical upstream products for the

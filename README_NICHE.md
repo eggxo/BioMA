@@ -51,6 +51,8 @@ that every requested directory contains uniquely identifiable BIO tif files.
 Each GCM is projected separately, then the configured `mean` or `median`
 ensemble is calculated for each period and scenario. Maladaptation is the
 continuous `current suitability - future suitability`.
+When one GCM is configured, that projection is used directly as the ensemble;
+there is no artificial second model or change to the suitability values.
 
 ## Outputs
 
@@ -64,6 +66,9 @@ Under `output_dir`:
 - `figures/` with current suitability, future suitability maps, continuous
   maladaptation maps, combined map panels, and a tuning plot;
 - `niche_pipeline.log`, `niche_plot.log`, and `run_manifest.json`.
+
+The run manifest records content fingerprints for the occurrence table,
+climate directories, mask components, MaxEnt jar, and the bundled scripts.
 
 The module uses the species mask for raster clipping. Country or nine-dash
 boundaries are not required for calculation and can be added to the plotting

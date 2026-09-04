@@ -44,6 +44,10 @@
   end-to-end contract smoke tests.
 - Add GitHub Actions checks for Python 3.8/3.10/3.12, source-package contents,
   and the public demo fixture.
+- Extend standalone module manifests with recursive input fingerprints and an
+  aggregate content signature, matching the project-level provenance contract.
+- Keep MaxEnt projections valid for a single configured GCM and make doctor
+  GDAL hints follow their command names when only a subset is configured.
 
 ## 0.7.0
 
