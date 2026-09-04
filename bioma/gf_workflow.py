@@ -475,16 +475,31 @@ def run_gf_workflow(
     signature_payload = {"config": config_payload, "sources": source_snapshot}
     workflow_signature = _json_sha256(signature_payload)
     workflow_inputs = {
+        "config_path": config.config_path,
         "vcf": config.vcf,
         "samples": config.samples,
-        "sample_groups_dir": config.sample_groups_dir,
         "coordinates": config.coordinates,
-        "present_climate": config.present_climate,
-        "future_climate": config.future_climate,
         "current_mask": config.current_mask,
         "future_mask": config.future_mask,
         "workflow_script": Path(__file__).resolve(),
     }
+    # Only the raster layers and sample files selected by the plan are inputs
+    # to this run. Hashing the complete climate catalogs made a dry-run scale
+    # with unrelated scenarios and caused needless invalidation.
+    for index, path in enumerate(discover_bioclim_rasters(config.present_climate), start=1):
+        workflow_inputs["present_bio{:02d}".format(index)] = path
+    for scenario in plan.scenarios:
+        for index, path in enumerate(scenario.rasters, start=1):
+            workflow_inputs[
+                "future_scenario__{}__bio{:02d}".format(scenario.name, index)
+            ] = path
+    if config.sample_groups_dir is not None:
+        for path in sorted(
+            (item.resolve() for item in config.sample_groups_dir.iterdir()
+             if item.is_file() and not item.name.startswith(".")),
+            key=lambda item: item.name.casefold(),
+        ):
+            workflow_inputs["sample_group__{}".format(path.name)] = path
     planned_stages = 3 + len(plan.scenarios) + len(plan.periods) * len(plan.ssps) + len(plan.periods)
     if dry_run:
         manifest = {

@@ -49,6 +49,36 @@ class StandaloneProvenanceTest(unittest.TestCase):
                             if value.get("kind") != "absent"
                         )
                     )
+                    self.assertEqual(fingerprints["config_path"]["kind"], "file")
+
+            rona = run_rona_workflow(root / "configs" / "rona.ini", dry_run=True)
+            rona_keys = rona["input_fingerprints"]
+            self.assertNotIn("unld_dir", rona_keys)
+            self.assertNotIn("future_climate", rona_keys)
+            self.assertEqual(len([key for key in rona_keys if key.startswith("ld_pruning.BIO")]), 19)
+            self.assertEqual(len([key for key in rona_keys if key.startswith("future_scenario__")]), 2)
+            self.assertTrue(all(rona_keys[key]["kind"] == "directory" for key in rona_keys if key.startswith("future_scenario__")))
+
+            load = run_load_workflow(root / "configs" / "load.ini", dry_run=True)
+            load_keys = load["input_fingerprints"]
+            self.assertNotIn("vcf_dir", load_keys)
+            self.assertNotIn("future_dir", load_keys)
+            self.assertEqual(len([key for key in load_keys if key.startswith("vcf_")]), 4)
+            self.assertEqual(len([key for key in load_keys if key.startswith("future_file__")]), 1)
+
+            niche = run_niche_workflow(root / "configs" / "niche.ini", dry_run=True)
+            niche_keys = niche["input_fingerprints"]
+            self.assertNotIn("future_root", niche_keys)
+            self.assertNotIn("current_env_dir", niche_keys)
+            self.assertEqual(len([key for key in niche_keys if key.startswith("future_scenario__")]), 2)
+            self.assertTrue(all(niche_keys[key]["kind"] == "directory" for key in niche_keys if key.startswith("future_scenario__")))
+
+            gf = run_gf_workflow(root / "configs" / "gf.ini", dry_run=True)
+            gf_keys = gf["input_fingerprints"]
+            self.assertNotIn("present_climate", gf_keys)
+            self.assertNotIn("future_climate", gf_keys)
+            self.assertEqual(len([key for key in gf_keys if key.startswith("present_bio")]), 19)
+            self.assertEqual(len([key for key in gf_keys if key.startswith("future_scenario__")]), 38)
 
             # Optional inputs remain explicit and do not get mistaken for a
             # missing required file.
@@ -75,10 +105,23 @@ class StandaloneProvenanceTest(unittest.TestCase):
             )
             second = run_rona_workflow(config, dry_run=True)
             self.assertNotEqual(
-                first["input_fingerprints"]["unld_dir"]["sha256"],
-                second["input_fingerprints"]["unld_dir"]["sha256"],
+                first["input_fingerprints"]["ld_pruning.BIO1"]["sha256"],
+                second["input_fingerprints"]["ld_pruning.BIO1"]["sha256"],
             )
             self.assertNotEqual(
+                first["input_signature_sha256"], second["input_signature_sha256"]
+            )
+
+    def test_unselected_catalog_entries_do_not_change_standalone_signature(self):
+        with tempfile.TemporaryDirectory(prefix="bioma-provenance-") as temporary:
+            root = generate(Path(temporary) / "demo")
+            config = root / "configs" / "rona.ini"
+            first = run_rona_workflow(config, dry_run=True)
+            unused = root / "data" / "climate" / "future" / "2091-2100-ssp370-unused"
+            unused.mkdir(parents=True)
+            (unused / "catalog-note.txt").write_text("ignored\n", encoding="utf-8")
+            second = run_rona_workflow(config, dry_run=True)
+            self.assertEqual(
                 first["input_signature_sha256"], second["input_signature_sha256"]
             )
 

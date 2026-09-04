@@ -191,6 +191,7 @@ def run_wfmoment_workflow(
         "config": config.payload(),
     }
     input_paths = {
+        "config_path": config.config_path,
         "current_raster": config.current_raster,
         "pi_file": config.pi_file,
         "structure_file": config.structure_file,

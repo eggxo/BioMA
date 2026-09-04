@@ -244,6 +244,34 @@ def _ld_prune_records(
     return records
 
 
+def _scenario_bio_files(scenario: RonaScenario) -> List[Path]:
+    """Return the 19 raster files consumed for one selected scenario.
+
+    The R implementation searches the selected directory for one
+    ``bioN.cut.tif`` file per BIO. Fingerprinting this exact set avoids
+    recursively hashing unrelated files in the future-climate catalog.
+    """
+    by_bio: Dict[int, List[Path]] = {}
+    for path in scenario.directory.glob("*"):
+        if not path.is_file():
+            continue
+        match = re.search(r"bio(\d+)\.cut\.tif$", path.name, re.IGNORECASE)
+        if not match:
+            continue
+        by_bio.setdefault(int(match.group(1)), []).append(path)
+    selected: List[Path] = []
+    for bio in range(1, BIO_COUNT + 1):
+        matches = by_bio.get(bio, [])
+        if len(matches) != 1:
+            raise InputError(
+                "RONA scenario {} must contain exactly one BIO{} raster".format(
+                    scenario.name, bio
+                )
+            )
+        selected.append(matches[0].resolve())
+    return selected
+
+
 def run_rona_workflow(config_path: Path, dry_run: bool = False, progress: Optional[Callable[[str], None]] = None) -> Dict[str, object]:
     config = load_rona_config(config_path)
     ld_records, unique_loci = _ld_prune_records(config.unld_dir, include_unique=True)
@@ -278,18 +306,27 @@ def run_rona_workflow(config_path: Path, dry_run: bool = False, progress: Option
             }
         },
     }
-    attach_input_fingerprints(
-        manifest,
-        {
-            "alt_frequency": config.alt_frequency,
-            "unld_dir": config.unld_dir,
-            "environment": config.environment,
-            "future_climate": config.future_climate,
-            "mask": config.mask,
-            "compute_script": compute_script,
-            "plot_script": plot_script,
-        },
-    )
+    input_paths: Dict[str, Optional[Path]] = {
+        "config_path": config.config_path,
+        "alt_frequency": config.alt_frequency,
+        "environment": config.environment,
+        "mask": config.mask,
+        "compute_script": compute_script,
+        "plot_script": plot_script,
+    }
+    # LD lists are consumed file-by-file; future rasters are consumed as a
+    # selected scenario directory. Keep both scopes explicit while avoiding a
+    # recursive hash of the catalog root, which may contain many unselected
+    # scenarios.
+    for row in ld_records:
+        input_paths["ld_pruning.BIO{}".format(row["bio"])] = Path(str(row["path"]))
+    for scenario in scenarios:
+        # Validate the exact set consumed by the R code, then fingerprint the
+        # selected directory once. Its member list records each raster hash;
+        # unrelated scenarios elsewhere in the catalog are never traversed.
+        _scenario_bio_files(scenario)
+        input_paths["future_scenario__{}".format(scenario.name)] = scenario.directory
+    attach_input_fingerprints(manifest, input_paths)
     config.output_dir.mkdir(parents=True, exist_ok=True)
     if dry_run:
         (config.output_dir / "rona_dry_run.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")

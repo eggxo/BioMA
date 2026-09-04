@@ -58,6 +58,14 @@ def _bio_ids(directory: Path) -> List[int]:
     return sorted(set(ids))
 
 
+def _bio_raster_files(directory: Path) -> List[Path]:
+    """Return the TIFF layers that ``niche_pipeline.R`` reads from a dir."""
+    return sorted(
+        (item.resolve() for item in directory.glob("*.tif") if item.is_file()),
+        key=lambda item: item.name.casefold(),
+    )
+
+
 @dataclass(frozen=True)
 class NicheConfig:
     config_path: Path
@@ -269,15 +277,20 @@ def run_niche_workflow(config_path: Path, dry_run: bool = False, progress: Optio
         }
     manifest: Dict[str, object] = {"module": "niche-workflow", "status": "planned" if dry_run else "running", "config": cfg.payload(), "inputs": {"maxent_jar": jar_input}, "discovery": {"current_bio": current_ids, "future_directories": {k: str(v) for k, v in future_dirs.items()}}}
     input_paths = {
+        "config_path": cfg.config_path,
         "occurrence_csv": cfg.occurrence_csv,
-        "current_env_dir": cfg.current_env_dir,
-        "future_root": cfg.future_root,
         "mask_shp": cfg.mask_shp,
         "maxent_jar": cfg.maxent_jar,
         "pipeline_script": pipeline,
         "plot_script": plotter,
     }
-    input_paths.update({"future_scenario__{}".format(key): path for key, path in future_dirs.items()})
+    for path in _bio_raster_files(cfg.current_env_dir):
+        input_paths["current_bio__{}".format(path.name)] = path
+    for key, directory in future_dirs.items():
+        # The selected directory is the unit consumed by ``read_env``. Its
+        # fingerprint includes every TIFF member, while avoiding a recursive
+        # walk of unselected future scenarios.
+        input_paths["future_scenario__{}".format(key)] = directory
     attach_input_fingerprints(manifest, input_paths)
     if dry_run:
         cfg.output_dir.mkdir(parents=True, exist_ok=True)

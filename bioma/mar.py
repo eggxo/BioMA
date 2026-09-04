@@ -126,6 +126,7 @@ def run_mar_workflow(config_path: Path, dry_run: bool = False, progress: Optiona
     attach_input_fingerprints(
         manifest,
         {
+            "config_path": config.config_path,
             "vcf": config.vcf,
             "lonlat": config.lonlat,
             "scenario_file": config.scenario_file,

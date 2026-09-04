@@ -127,6 +127,14 @@ def _find_vcf(root: Path, pattern: str) -> Path:
     return found[0]
 
 
+def _population_input_files(root: Path) -> List[Path]:
+    """List population keep files consumed by the load calculator."""
+    return sorted(
+        (item.resolve() for item in root.iterdir() if item.is_file() and not item.name.startswith(".")),
+        key=lambda item: item.name.casefold(),
+    )
+
+
 def _count_vcf_records(path: Path) -> int:
     """Count variant records without leaking a file descriptor."""
     count = 0
@@ -189,6 +197,7 @@ def run_load_workflow(config_path: Path, dry_run=False, progress: Optional[Calla
     plot_script = Path(__file__).resolve().parent / "scripts" / "load_plot.R"
     if not plot_script.is_file():
         raise InputError("Load plotting script does not exist: {}".format(plot_script))
+    population_files = _population_input_files(cfg.population_dir)
     site_counts = {
         "strict_synonymous": _count_vcf_records(syn),
         "strict_nonsynonymous": _count_vcf_records(nonsyn),
@@ -205,21 +214,20 @@ def run_load_workflow(config_path: Path, dry_run=False, progress: Optional[Calla
         },
     }
     input_paths = {
-        "vcf_dir": cfg.vcf_dir,
         "vcf_strict_synonymous": syn,
         "vcf_strict_nonsynonymous": nonsyn,
         "vcf_strict_deleterious": strict_del,
         "vcf_relaxed_deleterious": relax_del,
-        "population_dir": cfg.population_dir,
         "predictors": cfg.predictors,
-        "future_dir": cfg.future_dir,
         "mask": cfg.mask,
+        "config_path": cfg.config_path,
         "calculator_script": cfg.calc_script,
         "rf_tuning_script": cfg.rf_script,
         "future_prediction_script": cfg.predict_script,
         "plot_script": plot_script,
     }
-    input_paths.update({"future_file_{}".format(index + 1): path for index, path in enumerate(future_files)})
+    input_paths.update({"population_file__{}".format(path.name): path for path in population_files})
+    input_paths.update({"future_file__{}".format(path.name): path for path in future_files})
     attach_input_fingerprints(manifest, input_paths)
     if dry_run:
         cfg.output_dir.mkdir(parents=True, exist_ok=True); (cfg.output_dir / "load_dry_run.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8"); return manifest
