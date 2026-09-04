@@ -134,6 +134,49 @@ class ProjectInputFingerprintTest(unittest.TestCase):
                 with self.assertRaisesRegex(Exception, "input manifest changed"):
                     run_project_workflow(project, dry_run=True)
 
+    def test_custom_load_scripts_are_fingerprinted(self):
+        """A script replacement must invalidate the project before reuse."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            input_path = root / "data.tsv"
+            input_path.write_text("fixture\n", encoding="utf-8")
+            scripts = {}
+            for name in ("calc_script", "rf_script", "predict_script"):
+                path = root / (name + ".py")
+                path.write_text("# version 1\n", encoding="utf-8")
+                scripts[name] = path
+            module = root / "load.ini"
+            module.write_text(
+                "[inputs]\nrelative_input = data.tsv\n\n"
+                "[analysis]\noutput_dir = ignored\n\n"
+                "[parameters]\n"
+                + "\n".join("{} = {}".format(key, value) for key, value in scripts.items())
+                + "\n",
+                encoding="utf-8",
+            )
+            project = root / "project.ini"
+            output = root / "results"
+            project.write_text(
+                "[project]\nname = script-hash-test\noutput_dir = {}\n"
+                "resume = true\nreport = false\n\n"
+                "[modules]\nload = {}\n\n[shared]\n".format(output, module),
+                encoding="utf-8",
+            )
+
+            with patch("bioma.project._runner", return_value=self._fake_runner):
+                run_project_workflow(project, dry_run=True)
+
+            contract = (output / "00_project" / "input_contract.tsv").read_text(encoding="utf-8")
+            for name in ("calc_script", "rf_script", "predict_script"):
+                self.assertIn("module.load.parameters." + name, contract)
+            old_resolved = (output / "00_project" / "resolved_project.json").read_bytes()
+            scripts["rf_script"].write_text("# version 2\n", encoding="utf-8")
+
+            with patch("bioma.project._runner", return_value=self._fake_runner):
+                with self.assertRaisesRegex(Exception, "Project configuration changed"):
+                    run_project_workflow(project, dry_run=True)
+            self.assertEqual(old_resolved, (output / "00_project" / "resolved_project.json").read_bytes())
+
 
 if __name__ == "__main__":
     unittest.main()

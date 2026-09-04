@@ -100,6 +100,14 @@ PROJECT_INPUT_TARGETS = {
     "future_masks_json": (("wfmoment", "inputs", "future_masks_json"),),
 }
 
+# User-supplied implementation scripts are scientific inputs too.  Keep this
+# explicit so executable names such as ``Rscript`` are not interpreted as
+# paths, while custom load scripts receive the same content provenance as
+# VCFs, rasters, and tables.
+MODULE_SCRIPT_INPUTS = {
+    "load": ("calc_script", "rf_script", "predict_script"),
+}
+
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -433,35 +441,48 @@ def _configured_input_paths(config: ProjectConfig) -> Dict[str, Path]:
         overridden_targets.add(("niche", "inputs", "occurrence_csv"))
     for module, source in config.module_configs.items():
         parser = _read_ini(source)
-        if not parser.has_section("inputs"):
-            continue
-        for key, raw in parser.items("inputs"):
-            # work_dir is an execution scratch/output root, not a scientific
-            # input.  Recursing through it would hash logs and prior results
-            # and make otherwise identical projects non-reproducible.
-            if key.lower() in {"work_dir"}:
+        if parser.has_section("inputs"):
+            for key, raw in parser.items("inputs"):
+                # work_dir is an execution scratch/output root, not a
+                # scientific input.  Recursing through it would hash logs and
+                # prior results and make otherwise identical projects
+                # non-reproducible.
+                if key.lower() in {"work_dir"}:
+                    continue
+                if (module, "inputs", key) in overridden_targets:
+                    continue
+                # In project mode RONA consumes the GF-generated ALT
+                # frequency table whenever an adaptive VCF and GF are
+                # selected; a legacy path in the standalone RONA INI is
+                # therefore not an input.
+                if (
+                    module == "rona"
+                    and key.lower() == "alt_frequency"
+                    and (
+                        "adaptive_frequency" in config.inputs
+                        or ("adaptive_vcf" in config.inputs and "gf" in config.module_configs)
+                    )
+                ):
+                    continue
+                value = raw.strip()
+                if not value or value.lower() in FALSE_VALUES or value.lower() == "auto":
+                    continue
+                candidate = Path(value).expanduser()
+                if not candidate.is_absolute():
+                    candidate = source.parent / candidate
+                paths["module.{}.inputs.{}".format(module, key)] = candidate.resolve()
+
+        # Script overrides live under [parameters], not [inputs].  Include
+        # their byte-level fingerprints so changing a custom calculator or
+        # predictor invalidates an existing project before module reuse.
+        for key in MODULE_SCRIPT_INPUTS.get(module, ()):
+            raw = parser.get("parameters", key, fallback="").strip()
+            if not raw or raw.lower() in FALSE_VALUES or raw.lower() == "auto":
                 continue
-            if (module, "inputs", key) in overridden_targets:
-                continue
-            # In project mode RONA consumes the GF-generated ALT frequency
-            # table whenever an adaptive VCF and GF are selected; a legacy
-            # path in the standalone RONA INI is therefore not an input.
-            if (
-                module == "rona"
-                and key.lower() == "alt_frequency"
-                and (
-                    "adaptive_frequency" in config.inputs
-                    or ("adaptive_vcf" in config.inputs and "gf" in config.module_configs)
-                )
-            ):
-                continue
-            value = raw.strip()
-            if not value or value.lower() in FALSE_VALUES or value.lower() == "auto":
-                continue
-            candidate = Path(value).expanduser()
+            candidate = Path(raw).expanduser()
             if not candidate.is_absolute():
                 candidate = source.parent / candidate
-            paths["module.{}.inputs.{}".format(module, key)] = candidate.resolve()
+            paths["module.{}.parameters.{}".format(module, key)] = candidate.resolve()
     return paths
 
 
