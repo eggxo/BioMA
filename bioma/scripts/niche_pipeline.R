@@ -325,8 +325,15 @@ for (period in periods) for (scenario in scenarios) for (gcm in gcms) {
 for (period in periods) for (scenario in scenarios) {
   keys <- paste(period, scenario, gcms, sep = "__")
   if (!all(keys %in% names(future_preds))) stop("No complete GCM set for ", period, " ", scenario)
-  stack_future <- raster::stack(future_preds[keys])
-  ensemble <- if (ensemble_method == "median") raster::calc(stack_future, median, na.rm = TRUE) else raster::calc(stack_future, mean, na.rm = TRUE)
+  # ``raster::calc`` expects a multi-layer object.  A single configured GCM
+  # is already the ensemble and must bypass calc (older raster versions can
+  # otherwise construct a zero-column matrix and fail while assigning names).
+  if (length(keys) == 1L) {
+    ensemble <- future_preds[[keys[[1L]]]]
+  } else {
+    stack_future <- raster::stack(future_preds[keys])
+    ensemble <- if (ensemble_method == "median") raster::calc(stack_future, median, na.rm = TRUE) else raster::calc(stack_future, mean, na.rm = TRUE)
+  }
   ensemble_name <- paste0("future_suitability_", period, "_", scenario, "_ensemble_", ensemble_method, ".tif")
   writeRaster(ensemble, file.path(out_dir, "rasters", ensemble_name), overwrite = TRUE)
   delta <- current_pred - ensemble
