@@ -58,6 +58,12 @@ bioma --version
 python -m unittest discover -s tests -v
 ```
 
+When running directly from a source checkout, `bin/bioma` honors an explicit
+`PYTHON` environment variable, otherwise prefers the full `envs/bioma`
+interpreter and then falls back to the legacy `envs/bioma-plot` checkout
+environment.  A plotting-only environment should therefore be used explicitly
+for plotting commands, not as the calculation environment.
+
 Use `bioma doctor` to diagnose an installation without running a workflow:
 
 ```bash

@@ -40,5 +40,5 @@ jobs:
         run: |
           tar -tzf dist/*.tar.gz | grep -E '(^|/)conda-lock.yml$'
           tar -tzf dist/*.tar.gz | grep -E 'tests/data/demo/make_demo.py$'
-          if tar -tzf dist/*.tar.gz | grep -E 'workflow\..*\.test\.ini$'; then exit 1; fi
+          if tar -tzf dist/*.tar.gz | grep -E 'workflow\..*(test|6140)\.ini$'; then exit 1; fi
           if tar -tzf dist/*.tar.gz | grep -E '\.(tgz|tar\.gz|zip|whl)$'; then exit 1; fi

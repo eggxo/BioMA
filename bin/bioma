@@ -2,13 +2,21 @@
 set -eu
 
 PROJECT_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-PROJECT_PYTHON="$PROJECT_ROOT/envs/bioma-plot/bin/python"
+FULL_PYTHON="$PROJECT_ROOT/envs/bioma/bin/python"
+PLOT_PYTHON="$PROJECT_ROOT/envs/bioma-plot/bin/python"
 
-if [ -x "$PROJECT_PYTHON" ]; then
-    PYTHON="$PROJECT_PYTHON"
+# An explicit interpreter always wins.  The full environment is preferred for
+# every command; the plotting environment is retained only as a compatibility
+# fallback for older checkouts that predate the full ``envs/bioma`` layout.
+if [ -n "${PYTHON:-}" ]; then
+    SELECTED_PYTHON="$PYTHON"
+elif [ -x "$FULL_PYTHON" ]; then
+    SELECTED_PYTHON="$FULL_PYTHON"
+elif [ -x "$PLOT_PYTHON" ]; then
+    SELECTED_PYTHON="$PLOT_PYTHON"
 else
-    PYTHON="${PYTHON:-python3}"
+    SELECTED_PYTHON="python3"
 fi
 
 export PYTHONPATH="$PROJECT_ROOT${PYTHONPATH:+:$PYTHONPATH}"
-exec "$PYTHON" -m bioma.cli "$@"
+exec "$SELECTED_PYTHON" -m bioma.cli "$@"
