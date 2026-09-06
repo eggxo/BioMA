@@ -1,5 +1,9 @@
 # BioMA loadM/loadD module
 
+Complete parameter, method, and result interpretation is available in the
+[English user guide](docs/USER_GUIDE.en.md#7-loadmloadd) and
+[中文手册](docs/USER_GUIDE.zh-CN.md#7-loadmloadd).
+
 This module wraps the derived-allele VCF load calculation, random-forest
 hyperparameter tuning, future prediction, and spatial interpolation used for
 the genetic-load figures. It is exposed as one BioMA command.

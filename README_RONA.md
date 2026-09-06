@@ -1,5 +1,9 @@
 # BioMA RONA module
 
+Complete parameter, method, and result interpretation is available in the
+[English user guide](docs/USER_GUIDE.en.md#5-rona) and
+[中文手册](docs/USER_GUIDE.zh-CN.md#5-rona).
+
 The RONA module follows `RONA.revise.R` and is exposed as one command. It
 calculates per-BIO RONA using linear allele-frequency/environment regressions,
 weights loci by R-squared, calculates row-wise standard errors, and writes
@@ -39,9 +43,12 @@ calculation, and leaves the original source data unchanged.
 The `unld_dir` input is a scientific dependency, not a plotting option. It
 must contain `LD_BIO1.prune.in` through `LD_BIO19.prune.in`, normally produced
 by PLINK from the adaptive-site genotype VCF. During a run, each list is read
-by `rona_compute.R`; its locus count and SHA-256 digest are written to the
-manifest under `inputs.ld_pruning`. The population-environment table supplies
-the BIO predictor values and cannot replace these genotype-based LD lists.
+by `rona_compute.R`; BioMA first requires at least one frequency-column match,
+then writes its locus count, overlap count, and SHA-256 digest to the manifest
+under `inputs.ld_pruning`. The environment table must contain `bio1`-`bio19`
+and share at least three population IDs with the frequency table;
+`expected_populations` optionally enforces their exact count. This table
+supplies BIO predictor values and cannot replace genotype-based LD lists.
 
 For plotting, every selected model must have a valid value at the coordinate.
 The arithmetic mean is computed first and only that ensemble mean is passed to

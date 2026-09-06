@@ -7,6 +7,7 @@ configuration-driven wrapper, scenario discovery, validation, and manifests.
 from __future__ import annotations
 
 import configparser
+import csv
 import hashlib
 import json
 import os
@@ -194,8 +195,102 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _read_delimited_table(path: Path) -> Tuple[List[str], List[List[str]]]:
+    """Read the simple comma-, tab-, or whitespace-delimited RONA tables."""
+    try:
+        lines = [
+            line for line in path.read_text(encoding="utf-8-sig", errors="strict").splitlines()
+            if line.strip()
+        ]
+    except (OSError, UnicodeError) as error:
+        raise InputError("Cannot read RONA table {}: {}".format(path, error))
+    if not lines:
+        raise InputError("RONA table is empty: {}".format(path))
+    if "\t" in lines[0]:
+        rows = list(csv.reader(lines, delimiter="\t"))
+    elif "," in lines[0]:
+        rows = list(csv.reader(lines, delimiter=","))
+    else:
+        rows = [line.split() for line in lines]
+    header = [value.strip() for value in rows[0]]
+    if not header or any(not value for value in header):
+        raise InputError("RONA table has an empty column name: {}".format(path))
+    body = [[value.strip() for value in row] for row in rows[1:]]
+    for number, row in enumerate(body, start=2):
+        if len(row) != len(header):
+            raise InputError(
+                "RONA table {} row {} has {} fields; expected {}".format(
+                    path, number, len(row), len(header)
+                )
+            )
+    return header, body
+
+
+def _unique_population_ids(values: Sequence[str], path: Path, label: str) -> List[str]:
+    if not values or any(not value for value in values):
+        raise InputError("{} contains an empty population ID: {}".format(label, path))
+    seen = set()
+    duplicates = set()
+    for value in values:
+        if value in seen:
+            duplicates.add(value)
+        seen.add(value)
+    if duplicates:
+        raise InputError(
+            "{} contains duplicate population IDs: {}".format(
+                label, ", ".join(sorted(duplicates)[:10])
+            )
+        )
+    return list(values)
+
+
+def _validate_rona_tables(config: RonaConfig) -> Dict[str, object]:
+    freq_header, freq_rows = _read_delimited_table(config.alt_frequency)
+    if len(freq_header) < 2:
+        raise InputError("RONA frequency table requires Pop and at least one locus")
+    frequency_populations = _unique_population_ids(
+        [row[0] for row in freq_rows], config.alt_frequency, "RONA frequency table"
+    )
+
+    env_header, env_rows = _read_delimited_table(config.environment)
+    required = ["ID", "pop", "lon", "lat"] + [
+        "bio{}".format(i) for i in range(1, BIO_COUNT + 1)
+    ]
+    missing = [name for name in required if name not in env_header]
+    if missing:
+        raise InputError(
+            "RONA environment table is missing columns: {}".format(", ".join(missing))
+        )
+    id_index = env_header.index("ID")
+    environment_populations = _unique_population_ids(
+        [row[id_index] for row in env_rows], config.environment, "RONA environment table"
+    )
+    frequency_set = set(frequency_populations)
+    overlapping = [value for value in environment_populations if value in frequency_set]
+    if len(overlapping) < 3:
+        raise InputError("RONA requires at least three overlapping populations")
+    if config.expected_populations is not None and len(overlapping) != config.expected_populations:
+        raise InputError(
+            "RONA found {} overlapping populations; expected {}".format(
+                len(overlapping), config.expected_populations
+            )
+        )
+    # data.table(check.names=TRUE) changes the common PLINK chr:pos IDs to
+    # chr.pos; the R computation applies the same colon conversion to lists.
+    frequency_loci = {name.replace(":", ".") for name in freq_header[1:]}
+    return {
+        "frequency_populations": len(frequency_populations),
+        "environment_populations": len(environment_populations),
+        "overlapping_populations": len(overlapping),
+        "frequency_loci": frequency_loci,
+    }
+
+
 def _ld_prune_records(
-    unld_dir: Path, *, include_unique: bool = False
+    unld_dir: Path,
+    *,
+    include_unique: bool = False,
+    frequency_loci: Optional[Sequence[str]] = None,
 ) -> Union[List[Dict[str, object]], Tuple[List[Dict[str, object]], int]]:
     """Validate and fingerprint the per-BIO LD-pruning lists.
 
@@ -228,14 +323,22 @@ def _ld_prune_records(
             raise InputError("Cannot read RONA LD-pruning list {}: {}".format(path, error))
         if not ids:
             raise InputError("RONA LD-pruning list is empty: {}".format(path))
-        records.append(
-            {
-                "bio": bio,
-                "path": str(path.resolve()),
-                "sha256": _sha256(path),
-                "loci": len(dict.fromkeys(ids)),
-            }
-        )
+        unique_ids = set(ids)
+        record: Dict[str, object] = {
+            "bio": bio,
+            "path": str(path.resolve()),
+            "sha256": _sha256(path),
+            "loci": len(unique_ids),
+        }
+        if frequency_loci is not None:
+            normalized_ids = {value.replace(":", ".") for value in unique_ids}
+            overlap = len(normalized_ids.intersection(frequency_loci))
+            if overlap < 1:
+                raise InputError(
+                    "RONA LD-pruning list has no frequency-column overlap: {}".format(path)
+                )
+            record["frequency_overlap_loci"] = overlap
+        records.append(record)
         unique_loci.update(ids)
     if include_unique:
         # Keep the public record shape stable while allowing the run manifest
@@ -274,7 +377,11 @@ def _scenario_bio_files(scenario: RonaScenario) -> List[Path]:
 
 def run_rona_workflow(config_path: Path, dry_run: bool = False, progress: Optional[Callable[[str], None]] = None) -> Dict[str, object]:
     config = load_rona_config(config_path)
-    ld_records, unique_loci = _ld_prune_records(config.unld_dir, include_unique=True)
+    table_qc = _validate_rona_tables(config)
+    frequency_loci = table_qc.pop("frequency_loci")
+    ld_records, unique_loci = _ld_prune_records(
+        config.unld_dir, include_unique=True, frequency_loci=frequency_loci
+    )
     all_scenarios = discover_rona_scenarios(config.future_climate)
     scenarios = _select(all_scenarios, config)
     script_dir = Path(__file__).resolve().parent / "scripts"
@@ -296,7 +403,11 @@ def run_rona_workflow(config_path: Path, dry_run: bool = False, progress: Option
             }
             for item in scenarios
         ],
-        "counts": {"available_scenarios": len(all_scenarios), "selected_scenarios": len(scenarios), "populations": config.expected_populations},
+        "counts": {
+            "available_scenarios": len(all_scenarios),
+            "selected_scenarios": len(scenarios),
+            **table_qc,
+        },
         "inputs": {
             "ld_pruning": {
                 "description": "Per-BIO PLINK prune.in lists consumed by rona_compute.R",

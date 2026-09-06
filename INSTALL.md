@@ -5,13 +5,13 @@ MaxEnt jar and external research packages are separate dependencies with their
 own licenses.
 
 The public source repository is available at
-<https://github.com/eggxo/BioMA>. The `v0.8.3` tag is the current tested release
+<https://github.com/eggxo/BioMA>. The `v0.8.4` tag is the current tested release
 candidate; use a tagged release rather than an untracked working tree when
 reproducing an analysis.
 
 ## Supported platform
 
-BioMA 0.8.3 targets Linux, Python 3.8 or newer, R, GDAL command-line tools, and
+BioMA 0.8.4 targets Linux, Python 3.8 or newer, R, GDAL command-line tools, and
 Java for MaxEnt. The unified server environment is validated with Python 3.10,
 R 4.4, and Java 17.
 Windows can be used to edit configurations and inspect results, but the full

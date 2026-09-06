@@ -1,5 +1,9 @@
 # BioMA niche module
 
+Complete niche and vulnerability parameter, method, and result interpretation
+is available in the [English user guide](docs/USER_GUIDE.en.md#8-maxent-niche-model)
+and [中文手册](docs/USER_GUIDE.zh-CN.md#8-maxent-生态位).
+
 The niche module runs a MaxEnt-only species-distribution workflow with
 automatic variable selection, parameter tuning, and configurable future
 projections. It keeps suitability continuous; binary habitat maps are not

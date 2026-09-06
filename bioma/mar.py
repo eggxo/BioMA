@@ -88,13 +88,26 @@ def load_mar_config(path: Path) -> MarConfig:
     output = _path(analysis.get("output_dir", ""), base, "output_dir")
     if not vcf.is_file() or not lonlat.is_file():
         raise InputError("MAR input file does not exist")
+    if scenario_file is not None and not scenario_file.is_file():
+        raise InputError("MAR scenario_file does not exist: {}".format(scenario_file))
     scheme = params.get("scheme", "random").strip().lower()
-    if scheme not in {"random", "eastwest", "westeast", "northsouth", "southnorth"}:
-        raise InputError("scheme must be random, eastwest, westeast, northsouth, or southnorth")
+    if scheme not in {"random", "inwards", "outwards", "northsouth", "southnorth"}:
+        raise InputError("scheme must be random, inwards, outwards, northsouth, or southnorth")
     nrep = int(params.get("nrep", "10")); xfrac = float(params.get("xfrac", "0.01"))
     if nrep < 1 or not (0 < xfrac <= 1):
         raise InputError("nrep must be positive and xfrac must be in (0, 1]")
     steps = tuple(x.strip() for x in params.get("marsteps", "data,gm,sfs,mar,ext,plot").split(",") if x.strip())
+    allowed_steps = {"data", "gm", "sfs", "mar", "ext", "plot"}
+    invalid_steps = sorted(set(steps) - allowed_steps)
+    if invalid_steps:
+        raise InputError("Unsupported marsteps: {}".format(", ".join(invalid_steps)))
+    missing_steps = sorted({"data", "gm", "ext"} - set(steps))
+    if missing_steps:
+        raise InputError(
+            "BioMA MAR full runs require marsteps data, gm, and ext; missing {}".format(
+                ", ".join(missing_steps)
+            )
+        )
     maxsnps_value = params.get("maxsnps", "auto").strip().lower()
     maxsnps = None if maxsnps_value in {"", "auto", "all"} else int(maxsnps_value)
     if maxsnps is not None and maxsnps < 1:

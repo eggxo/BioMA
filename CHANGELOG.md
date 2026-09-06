@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.8.4 - 2026-09-06
+
+- Add matching Chinese and English user/methods guides for project mode and
+  every scientific module, including every supported configuration field,
+  command examples, output interpretation, limitations, and method references.
+- Add documentation contract tests so new configuration fields cannot be
+  omitted silently from either language guide or the source distribution.
+- Align MAR scheme validation with the pinned `mar` 0.2.0 package
+  (`random`, `inwards`, `outwards`, `northsouth`, and `southnorth`), validate
+  optional scenario files, and reject incomplete/unknown `marsteps` during
+  preflight.
+- Strengthen RONA preflight by validating all BIO1-BIO19 environment columns,
+  population-table overlap, optional exact population counts, and each
+  BIO-specific LD list's overlap with the adaptive frequency matrix.
+
 ## 0.8.3 - 2026-09-06
 
 - Complete the unified Mamba environment with the Conda/Bioconductor

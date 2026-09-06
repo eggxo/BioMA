@@ -1,5 +1,6 @@
 include .gitattributes LICENSE README.md README_LOAD.md README_MAR.md README_NICHE.md README_RONA.md INSTALL.md INPUTS.md ARCHITECTURE.md CHANGELOG.md CONTRIBUTING.md
 include architecture.dot architecture.svg architecture.png
+recursive-include docs *.md
 include environment.yml environment-plot.yml conda-lock.yml
 # Only portable example profiles belong in a public archive.  Keep every
 # server/regression profile out even if a future file is given a new name.

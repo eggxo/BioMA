@@ -9,6 +9,19 @@ BioMA is released under the GNU General Public License, version 3 only
 (GPL-3.0-only). The full license text is included in `LICENSE`. The MaxEnt jar
 and external research R packages remain subject to their own distribution terms.
 
+## Documentation
+
+- [中文用户与方法手册](docs/USER_GUIDE.zh-CN.md)
+- [English user and methods guide](docs/USER_GUIDE.en.md)
+- [Installation and environment](INSTALL.md)
+- [Input inventory and consolidation](INPUTS.md)
+- [Workflow architecture](ARCHITECTURE.md)
+
+The two user guides use the same section structure and document every
+configuration field exposed by project mode and the seven scientific modules.
+They also distinguish the implemented statistic from its biological
+interpretation and cite the main method references.
+
 ## Quick start
 
 BioMA is validated on Linux. The shortest installation path uses the locked
@@ -522,8 +535,9 @@ workflow checks; use production grid/replicate settings for final estimates.
 
 The MAR module wraps `MAR.all.R` through `bin/bioma mar`. `maxsnps = auto`
 counts non-header VCF records and passes that value to `MARPIPELINE`, avoiding a
-hard-coded SNP limit. The direction scheme defaults to `random` and can be
-changed to `eastwest`, `westeast`, `northsouth`, or `southnorth`.
+hard-coded SNP limit. The sampling/extinction scheme defaults to `random` and
+can be changed to `inwards`, `outwards`, `northsouth`, or `southnorth`, matching
+the locked `mar` 0.2.0 package.
 
 ```bash
 bin/bioma mar workflow.mar.ini --dry-run
