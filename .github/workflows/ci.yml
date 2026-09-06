@@ -40,7 +40,9 @@ jobs:
         run: |
           tar -tzf dist/*.tar.gz | grep -E '(^|/)conda-lock.yml$'
           tar -tzf dist/*.tar.gz | grep -E '(^|/)\.gitattributes$'
-          tar -xOf dist/*.tar.gz --wildcards '*/conda-lock.yml' | grep -q 'name: r-r.utils'
+          for package in bioconductor-seqarray r-bbmle r-matrixstats r-r.utils r-sads scipy wfmoments; do
+            tar -xOf dist/*.tar.gz --wildcards '*/conda-lock.yml' | grep -q "name: $package"
+          done
           tar -tzf dist/*.tar.gz | grep -E 'tests/data/demo/make_demo.py$'
           for doc in README_LOAD.md README_MAR.md README_NICHE.md README_RONA.md CONTRIBUTING.md; do
             tar -tzf dist/*.tar.gz | grep -E "(^|/)$doc$"

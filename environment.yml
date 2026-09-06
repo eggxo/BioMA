@@ -1,6 +1,7 @@
 name: bioma
 channels:
   - conda-forge
+  - bioconda
 platforms:
   # The validated production workflow runs on the Linux cluster.  Add a
   # platform explicitly before regenerating a lock for another architecture.
@@ -9,17 +10,32 @@ dependencies:
   - python=3.10
   - pip
   - gdal
+  - numpy
   - openjdk=17
+  - pandas
+  - rasterio
+  - scipy
   - r-base=4.4
+  - bioconductor-seqarray=1.46
+  - r-aiccmodavg
+  - r-bbmle
+  - r-cli
   - r-cowplot
+  - r-crayon
   - r-data.table
   - r-dismo
+  - r-doparallel
   - r-dplyr
   - r-fnn
+  - r-foreach
   - r-future
   - r-geosphere
   - r-ggplot2
+  - r-matrixstats
   - r-mgcv
+  - r-minpack.lm
+  - r-nortest
+  - r-numderiv
   - r-patchwork
   - r-plotrix
   - r-ragg
@@ -29,13 +45,11 @@ dependencies:
   - r-readr
   - r-remotes
   - r-rsample
+  - r-sads=0.6.5
   - r-sf
   - r-terra
   - r-tibble
   - r-tidymodels
   - r-tidyr
   - pip:
-      - numpy
-      - pandas
-      - rasterio
       - git+https://github.com/jeffspence/wfmoments@46023ab24ba3e11f8f6983a84fed0f404ad8bbf2

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bioma-workflow"
-version = "0.8.2"
+version = "0.8.3"
 description = "Auditable multidimensional climate-vulnerability workflow"
 readme = "README.md"
 license = {file = "LICENSE"}

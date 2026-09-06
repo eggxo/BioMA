@@ -7,7 +7,7 @@ BioMA is an auditable command-line workflow for multidimensional climate-vulnera
 
 BioMA is released under the GNU General Public License, version 3 only
 (GPL-3.0-only). The full license text is included in `LICENSE`. The MaxEnt jar
-and the two research R packages remain subject to their own distribution terms.
+and external research R packages remain subject to their own distribution terms.
 
 ## Quick start
 
@@ -15,8 +15,9 @@ BioMA is validated on Linux. The shortest installation path uses the locked
 Conda environment:
 
 ```bash
-conda-lock install --name bioma conda-lock.yml
-conda activate bioma
+conda-lock install --mamba --name bioma conda-lock.yml
+mamba activate bioma
+bin/install-bioma-r-deps.sh
 python -m pip install --no-deps .
 bioma --version
 bioma doctor

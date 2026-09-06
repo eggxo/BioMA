@@ -33,6 +33,46 @@ SKIP_PARTS = {".git", "build", "dist", "__pycache__", "bioma_workflow.egg-info"}
 
 
 class ReleaseBoundaryTest(unittest.TestCase):
+    def test_unified_environment_covers_external_package_dependencies(self):
+        root = Path(__file__).resolve().parents[1]
+        environment = (root / "environment.yml").read_text(encoding="utf-8")
+        required_specs = {
+            "  - bioconda",
+            "  - bioconductor-seqarray=1.46",
+            "  - r-aiccmodavg",
+            "  - r-bbmle",
+            "  - r-doparallel",
+            "  - r-foreach",
+            "  - r-matrixstats",
+            "  - r-minpack.lm",
+            "  - r-nortest",
+            "  - r-sads=0.6.5",
+            "  - scipy",
+        }
+        self.assertTrue(required_specs.issubset(set(environment.splitlines())))
+
+        install = (root / "INSTALL.md").read_text(encoding="utf-8")
+        source_order = [
+            install.index("extendedForest_1.6.2.tar.gz"),
+            install.index("gradientForest_0.1-37.tar.gz"),
+            install.index("sars_2.0.0.tar.gz"),
+            install.index("meixilin/mar@f2a60772504a52e518d6827a8d22de1ef4dd11d4"),
+        ]
+        self.assertEqual(source_order, sorted(source_order))
+
+        helper = (root / "bin" / "install-bioma-r-deps.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertTrue(helper.startswith("#!/usr/bin/env sh\n"))
+        self.assertNotIn("\r", helper)
+        for marker in (
+            "extendedForest_1.6.2.tar.gz",
+            "gradientForest_0.1-37.tar.gz",
+            "sars_2.0.0.tar.gz",
+            "meixilin/mar@f2a60772504a52e518d6827a8d22de1ef4dd11d4",
+        ):
+            self.assertIn(marker, helper)
+
     def test_linux_launcher_uses_lf_shebang(self):
         launcher = (Path(__file__).resolve().parents[1] / "bin" / "bioma").read_bytes()
         self.assertTrue(launcher.startswith(b"#!/usr/bin/env sh\n"))

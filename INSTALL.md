@@ -5,14 +5,15 @@ MaxEnt jar and external research packages are separate dependencies with their
 own licenses.
 
 The public source repository is available at
-<https://github.com/eggxo/BioMA>. The `v0.8.2` tag is the current tested release
+<https://github.com/eggxo/BioMA>. The `v0.8.3` tag is the current tested release
 candidate; use a tagged release rather than an untracked working tree when
 reproducing an analysis.
 
 ## Supported platform
 
-BioMA 0.8.2 targets Linux, Python 3.8 or newer, R, GDAL command-line tools, and
-Java for MaxEnt. The current production tests run on Linux with Python 3.8.15.
+BioMA 0.8.3 targets Linux, Python 3.8 or newer, R, GDAL command-line tools, and
+Java for MaxEnt. The unified server environment is validated with Python 3.10,
+R 4.4, and Java 17.
 Windows can be used to edit configurations and inspect results, but the full
 scientific workflow has not been qualified there.
 
@@ -32,8 +33,9 @@ instead of solving the unpinned environment again. It contains concrete Conda
 and pip package URLs and SHA-256 checksums:
 
 ```bash
-conda-lock install --name bioma conda-lock.yml
-conda activate bioma
+conda-lock install --mamba --name bioma conda-lock.yml
+mamba activate bioma
+bin/install-bioma-r-deps.sh
 python -m pip install --no-deps .
 ```
 
@@ -48,12 +50,23 @@ The separately maintained `environment-plot.yml` is a lighter plotting-only
 environment. It is useful when calculations already run in module-specific
 environments; it is not a substitute for the full lock.
 
-Two research R packages are not available as Conda packages. Install the
-reviewed versions used by BioMA:
+Four R packages are installed from reviewed source releases after the Conda
+transaction. `extendedForest` must be installed before `gradientForest`, and
+the archived `sars` release must be installed before `mar`. Their remaining
+dependencies are included in `environment.yml` and `conda-lock.yml`:
 
 ```bash
-Rscript -e 'remotes::install_url("https://download.r-forge.r-project.org/src/contrib/gradientForest_0.1-37.tar.gz")'
-Rscript -e 'remotes::install_github("meixilin/mar@f2a60772504a52e518d6827a8d22de1ef4dd11d4")'
+bin/install-bioma-r-deps.sh
+```
+
+The helper is idempotent and verifies every installed version. Its equivalent
+commands are:
+
+```bash
+Rscript -e 'remotes::install_url("https://download.r-forge.r-project.org/src/contrib/extendedForest_1.6.2.tar.gz", dependencies = FALSE, upgrade = "never")'
+Rscript -e 'remotes::install_url("https://download.r-forge.r-project.org/src/contrib/gradientForest_0.1-37.tar.gz", dependencies = FALSE, upgrade = "never")'
+Rscript -e 'remotes::install_url("https://cran.r-project.org/src/contrib/Archive/sars/sars_2.0.0.tar.gz", dependencies = FALSE, upgrade = "never")'
+Rscript -e 'remotes::install_github("meixilin/mar@f2a60772504a52e518d6827a8d22de1ef4dd11d4", dependencies = FALSE, upgrade = "never")'
 ```
 
 The GF offset command additionally requires `FNN` and `R.utils` in the same R

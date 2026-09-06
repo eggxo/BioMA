@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.8.3 - 2026-09-06
+
+- Complete the unified Mamba environment with the Conda/Bioconductor
+  dependencies required by MAR and its archived `sars` dependency.
+- Install Python numerical and raster packages through Conda so a transient
+  GitHub failure while fetching WFmoments does not omit unrelated runtimes.
+- Document the reproducible source-install order for `extendedForest`,
+  `gradientForest`, `sars`, and `mar`, with an idempotent installation helper.
+- Validate one full seven-module server environment with 32 doctor checks,
+  84 Python tests, and all bundled R scripts.
+
 ## 0.8.2 - 2026-09-06
 
 - Normalize Linux launchers, source, configuration, documentation, and demo
