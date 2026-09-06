@@ -32,6 +32,7 @@ KNOWN_MODULES = {"gf", "rona", "mar", "load", "niche", "wfmoment", "vulnerabilit
 R_PACKAGE_MODULES = {
     "gradientForest": {"gf"},
     "FNN": {"gf"},
+    "R.utils": {"gf"},
     "data.table": {"gf", "rona", "mar", "load", "vulnerability"},
     "geosphere": {"gf"},
     "mar": {"mar"},

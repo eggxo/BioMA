@@ -1,10 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.8.1 - 2026-09-06
 
 - Clarify the public quick-start workflow and the two bundled demo fixtures.
-- Document the `r-fnn` dependency required by GF offset calculations and the
-  `bioma doctor --strict` environment check.
+- Document and validate the `r-fnn` and `r-r.utils` dependencies required by GF
+  offset calculations and the `bioma doctor --strict` environment check.
+- Regenerate the Linux Conda lock after adding `r-r.utils` and verify a real GF
+  offset calculation against 54,624 current/future climate cells.
 
 ## 0.8.0 - 2026-09-03
 

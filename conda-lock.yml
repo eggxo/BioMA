@@ -5,22 +5,22 @@
 # available, unless you explicitly update the lock file.
 #
 # Install this environment as "YOURENV" with:
-#     conda-lock install -n YOURENV conda-lock.yml
+#     conda-lock install -n YOURENV conda-lock-rutils.yml
 # To update a single package to the latest version compatible with the version constraints in the source:
-#     conda-lock lock  --lockfile conda-lock.yml --update PACKAGE
+#     conda-lock lock  --lockfile conda-lock-rutils.yml --update PACKAGE
 # To re-solve the entire environment, e.g. after changing a version constraint in the source file:
-#     conda-lock -f environment.yml --lockfile conda-lock.yml
+#     conda-lock -f bioma-environment-rutils.yml --lockfile conda-lock-rutils.yml
 version: 1
 metadata:
   content_hash:
-    linux-64: c0048301f2b111b569e8224596d455e442fbc82a4568ae0f5b439b40df97404b
+    linux-64: e2e37808f4db3577c39e99090087d678d26ab761e9e0c1adddeca0571bee5149
   channels:
   - url: conda-forge
     used_env_vars: []
   platforms:
   - linux-64
   sources:
-  - environment.yml
+  - bioma-environment-rutils.yml
 package:
 - name: _openmp_mutex
   version: '4.5'
@@ -981,10 +981,10 @@ package:
     libiconv: '>=1.18,<2.0a0'
     libzlib: '>=1.3.2,<2.0a0'
     pcre2: '>=10.47,<10.48.0a0'
-  url: https://conda.anaconda.org/conda-forge/linux-64/libglib-2.88.3-he503a2a_2.conda
+  url: https://conda.anaconda.org/conda-forge/linux-64/libglib-2.88.3-he503a2a_3.conda
   hash:
-    md5: 533d342dedadf134c67760ce6fc5b748
-    sha256: af6c14f387f810c5df491b328ae955329596d3bc73b1e2e091ab5adb46a10759
+    md5: d216efacca3f34f2b13ddd1632f53833
+    sha256: f57bf3954dbba8b27ec68540e84f8b2c2375ffa5702f89ca9741e17329fc3953
   category: main
   optional: false
 - name: libgomp
@@ -1443,57 +1443,57 @@ package:
   category: main
   optional: false
 - name: libxml2
-  version: 2.15.3
+  version: 2.15.4
   manager: conda
   platform: linux-64
   dependencies:
     __glibc: '>=2.17,<3.0.a0'
     icu: '>=78.3,<79.0a0'
-    libgcc: '>=14'
+    libgcc: '>=15'
     libiconv: '>=1.18,<2.0a0'
     liblzma: '>=5.8.3,<6.0a0'
-    libxml2-16: 2.15.3
+    libxml2-16: 2.15.4
     libzlib: '>=1.3.2,<2.0a0'
-  url: https://conda.anaconda.org/conda-forge/linux-64/libxml2-2.15.3-h49c6c72_1.conda
+  url: https://conda.anaconda.org/conda-forge/linux-64/libxml2-2.15.4-h7df9aa5_0.conda
   hash:
-    md5: 2d34cdb31014cbc8f1e9384c89ede0a5
-    sha256: a16a576a5844a3a0e1cdfc5e162b9fe9c64dccf6a93f44c293bb42851aebe2b4
+    md5: ea192d1ef556bf1d55de4acb8c0f5b65
+    sha256: 053d85821ce5e36b7ce03faea5930382f6af695df9e2cd68e5d8d273072d1551
   category: main
   optional: false
 - name: libxml2-16
-  version: 2.15.3
+  version: 2.15.4
   manager: conda
   platform: linux-64
   dependencies:
     __glibc: '>=2.17,<3.0.a0'
     icu: '>=78.3,<79.0a0'
-    libgcc: '>=14'
+    libgcc: '>=15'
     libiconv: '>=1.18,<2.0a0'
     liblzma: '>=5.8.3,<6.0a0'
     libzlib: '>=1.3.2,<2.0a0'
-  url: https://conda.anaconda.org/conda-forge/linux-64/libxml2-16-2.15.3-hca6bf5a_1.conda
+  url: https://conda.anaconda.org/conda-forge/linux-64/libxml2-16-2.15.4-hf3af7cc_0.conda
   hash:
-    md5: 20e4d67ec908f0405124f11612c48305
-    sha256: 087d4de023f22d6a28b9e1b818961dd41e9bda6e9793590600ff16ca150bf9cb
+    md5: b7545c57a73a51d72aa6eee5695cf051
+    sha256: 9a1685c8d8b8488cd7882a9cd6e673e687211ca763ebbcd1e91b6f594eeadc45
   category: main
   optional: false
 - name: libxml2-devel
-  version: 2.15.3
+  version: 2.15.4
   manager: conda
   platform: linux-64
   dependencies:
     __glibc: '>=2.17,<3.0.a0'
     icu: '>=78.3,<79.0a0'
-    libgcc: '>=14'
+    libgcc: '>=15'
     libiconv: '>=1.18,<2.0a0'
     liblzma: '>=5.8.3,<6.0a0'
-    libxml2: 2.15.3
-    libxml2-16: 2.15.3
+    libxml2: 2.15.4
+    libxml2-16: 2.15.4
     libzlib: '>=1.3.2,<2.0a0'
-  url: https://conda.anaconda.org/conda-forge/linux-64/libxml2-devel-2.15.3-h49c6c72_1.conda
+  url: https://conda.anaconda.org/conda-forge/linux-64/libxml2-devel-2.15.4-h7df9aa5_0.conda
   hash:
-    md5: f986d9c9de80813d076d235f753889ff
-    sha256: 443ff3b29df8eab5b075abed87e4edbf59ca5602f627a79bffe5b0855ea40ce9
+    md5: 9a414200ffe436e47d72c9f4c11c3658
+    sha256: 17cf9286fd38ced7b101f2f778b8288612432d451c8bd26fb9aa0a6088dfee5d
   category: main
   optional: false
 - name: libzlib
@@ -1801,6 +1801,7 @@ package:
     libzlib: '>=1.3.2,<2.0a0'
     ncurses: '>=6.6,<7.0a0'
     openssl: '>=3.5.7,<4.0a0'
+    pip: ''
     readline: '>=8.3,<9.0a0'
     tk: '>=8.6.13,<8.7.0a0'
     tzdata: ''
@@ -2780,20 +2781,20 @@ package:
   category: main
   optional: false
 - name: r-kernsmooth
-  version: '2.23_26'
+  version: '2.23_27'
   manager: conda
   platform: linux-64
   dependencies:
     __glibc: '>=2.17,<3.0.a0'
     libblas: '>=3.9.0,<4.0a0'
-    libgcc: '>=14'
+    libgcc: '>=15'
     libgfortran: ''
-    libgfortran5: '>=14.3.0'
+    libgfortran5: '>=15.3.0'
     r-base: '>=4.4,<4.5.0a0'
-  url: https://conda.anaconda.org/conda-forge/linux-64/r-kernsmooth-2.23_26-r44ha0a88a1_1.conda
+  url: https://conda.anaconda.org/conda-forge/linux-64/r-kernsmooth-2.23_27-r44hf1ecf5c_0.conda
   hash:
-    md5: 9737719ec08adb623be7358f45221be2
-    sha256: 71e7c91b230748646fdcae0587a94bc8ea3a5e659e950a0adff17bf6a6007cd3
+    md5: 47266dfdfcf845fdf8e5c8604e8fb2ed
+    sha256: c07f860e3116f7c5c034241ab7ef164417be3080e9d00ca83c28779bd57071cc
   category: main
   optional: false
 - name: r-knitr
@@ -3310,6 +3311,45 @@ package:
   hash:
     md5: bb8a0c5371d5881cbfac7fd503c907ba
     sha256: 3a9dec6181e7077520b2c86654ea613f86b1875f98ff5e20b072133ae26a289c
+  category: main
+  optional: false
+- name: r-r.methodss3
+  version: 1.8.2
+  manager: conda
+  platform: linux-64
+  dependencies:
+    r-base: '>=4.4,<4.5.0a0'
+  url: https://conda.anaconda.org/conda-forge/noarch/r-r.methodss3-1.8.2-r44hc72bb7e_4.conda
+  hash:
+    md5: 146b1ea9d642719c5abb6403844c98eb
+    sha256: 01d6e465149cba1ed9aff04bea9c89c355fb6f0e6ba9c83e2f7dd8a8e98795b8
+  category: main
+  optional: false
+- name: r-r.oo
+  version: 1.27.1
+  manager: conda
+  platform: linux-64
+  dependencies:
+    r-base: '>=4.4,<4.5.0a0'
+    r-r.methodss3: '>=1.7.1'
+  url: https://conda.anaconda.org/conda-forge/noarch/r-r.oo-1.27.1-r44hc72bb7e_1.conda
+  hash:
+    md5: c1b2572ba74dd738c5dd6e363ec84392
+    sha256: ace9a06b9a1784914c71316ab92d8ad3e097bd943f2f4b045c99cad9f92e69f2
+  category: main
+  optional: false
+- name: r-r.utils
+  version: 2.13.0
+  manager: conda
+  platform: linux-64
+  dependencies:
+    r-base: '>=4.4,<4.5.0a0'
+    r-r.methodss3: '>=1.8.0'
+    r-r.oo: '>=1.23.0'
+  url: https://conda.anaconda.org/conda-forge/noarch/r-r.utils-2.13.0-r44hc72bb7e_1.conda
+  hash:
+    md5: 9f0e2df8970696fe83a51560e903a013
+    sha256: 2cad4b1b67eec0ee360db33d45c5268a84c6866500a13c2349bb18d9aa01dfba
   category: main
   optional: false
 - name: r-r6

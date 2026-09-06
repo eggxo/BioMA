@@ -5,13 +5,13 @@ MaxEnt jar and external research packages are separate dependencies with their
 own licenses.
 
 The public source repository is available at
-<https://github.com/eggxo/BioMA>. The `v0.8.0` tag is the tested release
+<https://github.com/eggxo/BioMA>. The `v0.8.1` tag is the current tested release
 candidate; use a tagged release rather than an untracked working tree when
 reproducing an analysis.
 
 ## Supported platform
 
-BioMA 0.8.0 targets Linux, Python 3.8 or newer, R, GDAL command-line tools, and
+BioMA 0.8.1 targets Linux, Python 3.8 or newer, R, GDAL command-line tools, and
 Java for MaxEnt. The current production tests run on Linux with Python 3.8.15.
 Windows can be used to edit configurations and inspect results, but the full
 scientific workflow has not been qualified there.
@@ -56,12 +56,13 @@ Rscript -e 'remotes::install_url("https://download.r-forge.r-project.org/src/con
 Rscript -e 'remotes::install_github("meixilin/mar@f2a60772504a52e518d6827a8d22de1ef4dd11d4")'
 ```
 
-The GF offset command additionally requires `FNN` in the same R environment as
-`gradientForest`, `data.table`, and `geosphere`. Install the Conda binary
-package into the environment used by GF (the package name is `r-fnn`):
+The GF offset command additionally requires `FNN` and `R.utils` in the same R
+environment as `gradientForest`, `data.table`, and `geosphere`. `R.utils` is
+needed when `data.table::fread()` reads BioMA's compressed climate tables.
+Install the Conda binary packages into the environment used by GF:
 
 ```bash
-conda install -n <gf-environment> -c conda-forge r-fnn
+mamba install -n <gf-environment> -c conda-forge r-fnn r-r.utils
 ```
 
 Do not mix a system R installation with the Conda libraries used by the GF
@@ -72,8 +73,8 @@ bioma doctor workflow.example.ini --rscript "$CONDA_PREFIX/bin/Rscript"
 ```
 
 For a project that enables GF, use `--strict` after setting the module's
-`rscript` to the same environment. A missing `FNN` is reported before any
-offset calculation starts.
+`rscript` to the same environment. Missing `FNN` or `R.utils` packages are
+reported before any offset calculation starts.
 
 Then verify the command and run the bundled Python regression tests:
 

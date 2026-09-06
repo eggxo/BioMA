@@ -25,6 +25,7 @@ dependencies:
   - r-ragg
   - r-ranger
   - r-raster
+  - r-r.utils
   - r-readr
   - r-remotes
   - r-rsample

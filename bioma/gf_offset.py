@@ -120,6 +120,7 @@ def _resolve_rscript(requested: Optional[str]) -> str:
     expression = (
         "suppressPackageStartupMessages(library(gradientForest));"
         "suppressPackageStartupMessages(library(FNN));"
+        "suppressPackageStartupMessages(library(R.utils));"
         "suppressPackageStartupMessages(library(data.table));"
         "suppressPackageStartupMessages(library(geosphere))"
     )
@@ -140,7 +141,7 @@ def _resolve_rscript(requested: Optional[str]) -> str:
         if result.returncode == 0:
             return candidate
     raise InputError(
-        "No Rscript with gradientForest, FNN, data.table, and geosphere was found"
+        "No Rscript with gradientForest, FNN, R.utils, data.table, and geosphere was found"
     )
 
 

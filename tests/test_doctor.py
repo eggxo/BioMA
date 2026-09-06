@@ -8,10 +8,13 @@ from pathlib import Path
 from unittest.mock import patch
 
 from bioma.cli import main
-from bioma.doctor import DoctorCheck, _config_context, _maxent_check, run_doctor
+from bioma.doctor import DoctorCheck, R_PACKAGE_MODULES, _config_context, _maxent_check, run_doctor
 
 
 class DoctorConfigTest(unittest.TestCase):
+    def test_gf_requires_compressed_table_runtime(self):
+        self.assertEqual(R_PACKAGE_MODULES["R.utils"], {"gf"})
+
     def test_standalone_gf_config_is_inferred(self):
         with tempfile.TemporaryDirectory() as temporary:
             config = Path(temporary) / "config.ini"
