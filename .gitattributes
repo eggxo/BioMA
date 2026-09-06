@@ -1,0 +1,31 @@
+* text=auto
+
+# Linux entry points, source, configuration, and portable fixtures.
+bin/bioma text eol=lf
+*.sh text eol=lf
+*.py text eol=lf
+*.R text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.in text eol=lf
+*.tsv text eol=lf
+*.csv text eol=lf
+*.vcf text eol=lf
+*.dot text eol=lf
+*.svg text eol=lf
+LICENSE text eol=lf
+
+# Media, archives, and scientific binary formats must not be normalized.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary
+*.tif binary
+*.tiff binary
+*.gz binary
+*.zip binary
+*.whl binary

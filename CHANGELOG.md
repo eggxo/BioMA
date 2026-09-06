@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.2 - 2026-09-06
+
+- Normalize Linux launchers, source, configuration, documentation, and demo
+  fixtures to LF through `.gitattributes` while preserving binary files.
+- Verify in CI that the source archive retains an executable `bin/bioma` and
+  can launch directly after extraction on Linux.
+
 ## 0.8.1 - 2026-09-06
 
 - Clarify the public quick-start workflow and the two bundled demo fixtures.

@@ -33,6 +33,11 @@ SKIP_PARTS = {".git", "build", "dist", "__pycache__", "bioma_workflow.egg-info"}
 
 
 class ReleaseBoundaryTest(unittest.TestCase):
+    def test_linux_launcher_uses_lf_shebang(self):
+        launcher = (Path(__file__).resolve().parents[1] / "bin" / "bioma").read_bytes()
+        self.assertTrue(launcher.startswith(b"#!/usr/bin/env sh\n"))
+        self.assertNotIn(b"\r", launcher)
+
     def test_public_gf_template_does_not_pin_species_site_count(self):
         template = (Path(__file__).resolve().parents[1] / "workflow.example.ini").read_text(
             encoding="utf-8"
