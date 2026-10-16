@@ -388,7 +388,19 @@ class 和 beta multiplier，通过 presence/background 的 k-fold AUC 或 TSS �
 
 输出是 cloglog 连续适生性，不是出现概率的直接观测。`maladaptation = current
 suitability - future suitability`：正值表示预测适生性下降，负值表示预测改善，
-0 表示不变。当前版本明确不二值化。
+0 表示不变。默认仍保留连续结果；可选的 `range_change` 子功能在连续投影完成后
+单独进行阈值化和栖息地转变分类。
+
+启用该子功能后，BioMA 对当前适生性和每个 GCM 的未来适生性栅格应用同一阈值，
+并按 GCM 共识计算四类栅格：0 为当前和未来均不适宜，1 为 Contract（当前适宜、
+未来不适宜），2 为 Invariant（当前和未来均适宜），3 为 Expand（当前不适宜、
+未来适宜）。软件同时计算各类别面积及其占当前适宜面积的百分比。扩张面积是
+相对于当前适宜区新增的面积，因此 Contract、Invariant 和 Expand 的百分比不必
+相加为 100%。该结果可作为 MAR 和 WFmoments 的未来面积输入。
+
+阈值默认由最终当前模型的最大 TSS 选择；也可以由用户提供固定阈值。默认的
+`majority` 共识在 3 个 GCM 中要求至少 2 个 GCM 支持未来适宜，适用于当前示例，
+但物种和 GCM 数量变化时会自动重新计算要求的票数。
 
 ### 8.2 全部配置字段
 
@@ -415,7 +427,11 @@ suitability - future suitability`：正值表示预测适生性下降，负值�
 | `[projection] scenarios` | `auto` | 如 `ssp245,ssp585`；`auto` 发现。 |
 | `[projection] gcms` | `auto` | GCM 列表；`auto` 发现。 |
 | `[projection] ensemble_method` | `mean` | GCM 栅格逐像元 `mean` 或 `median`；一个 GCM 时直接使用该层。 |
-| `[projection] binary_output` | `false` | 当前版本必须为 `false`；不生成阈值化适生地。 |
+| `[projection] binary_output` | `false` | 必须为 `false`；连续 MaxEnt 投影与可选的 `range_change` 转变结果分开。 |
+| `[range_change] enabled` | `false` | 是否在连续 MaxEnt 投影后计算 Contract、Invariant 和 Expand。 |
+| `[range_change] threshold` | `auto` | `auto` 使用最终当前模型的最大 TSS 阈值；也可填写 0 到 1 之间的固定阈值。 |
+| `[range_change] consensus` | `majority` | GCM 共识规则：`majority`、`all`、`any` 或 `minimum`。 |
+| `[range_change] minimum_gcm_agreement` | `auto` | `auto` 按共识规则计算；或填写支持未来适宜所需的 GCM 数量。 |
 | `[analysis] output_dir` | 必填 | 输出目录。 |
 | `[analysis] rscript` | `Rscript` | MaxEnt 调参和投影环境。 |
 | `[analysis] plot_rscript` | `Rscript` | 绘图环境，可与计算环境不同。 |
@@ -430,7 +446,10 @@ bioma niche workflow.niche.example.ini
 `selected_model.tsv` 记录模型选择；`models/` 保存 fold 和最终模型；`rasters/`
 保存 current、逐 GCM、ensemble 和 maladaptation；`figures/` 保存调参、当代、
 未来和不适应性图。应检查 occurrence 空间偏倚、背景定义、外推/clamping、AUC/TSS
-方差和 GCM 一致性。适生性变化不等于遗传不适应性。
+方差和 GCM 一致性。若启用 `range_change`，`range_change/rasters/` 保存二值和
+转变栅格，`range_change/range_change_area_summary.csv` 保存面积统计，
+`figures/Figure_Niche_Range_Change_Maps.*` 和 `Figure_Niche_Range_Change_Area.*`
+保存图件。适生性变化不等于遗传不适应性，栖息地扩张也不代表物种已经成功迁入。
 
 ## 9. WFmoments 2-D deme
 

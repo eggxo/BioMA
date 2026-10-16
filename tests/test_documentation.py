@@ -53,7 +53,7 @@ SECTION_KEYS = {
         "candidate_subset_sizes", "max_models", "background_n", "cv_folds",
         "feature_classes", "beta_multipliers", "selection_metric", "seed", "periods",
         "scenarios", "gcms", "ensemble_method", "binary_output", "output_dir", "rscript",
-        "plot_rscript",
+        "plot_rscript", "enabled", "threshold", "consensus", "minimum_gcm_agreement",
     },
     9: {
         "current_raster", "pi_file", "structure_file", "param_file", "area_file",

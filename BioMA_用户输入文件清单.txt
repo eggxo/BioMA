@@ -1,0 +1,292 @@
+BioMA 用户输入文件清单
+========================
+
+本清单按完整 BioMA 项目整理。用户不需要为每个模块重复准备相同的环境、群体和气候文件。未运行的模块，其对应输入可以不提供。
+
+一、项目配置文件
+----------------
+
+1. project.ini
+
+用于设置输入路径、启用的模块、GCM、SSP、未来时期和分析参数。
+
+完整项目运行：
+
+bioma project project.ini --dry-run
+bioma project project.ini
+
+二、所有模块建议共用的基础输入
+------------------------------
+
+1. population_samples.tsv
+
+个体—群体对应表，每个个体一行：
+
+sample_id    population_id
+sample_001   Pop_A
+sample_002   Pop_A
+sample_003   Pop_B
+
+用于：
+- GF 的样本—群体对应；
+- MAR 的样本坐标输入；
+- loadM/loadD 的群体 keep-list；
+- MaxEnt occurrence 点表生成。
+
+2. population_environment.tsv
+
+群体环境表，推荐每个群体一行：
+
+ID    pop    lon    lat    bio1    bio2    ...    bio19
+P01   GroupA 105.2  30.1   ...     ...           ...
+P02   GroupA 106.4  30.8   ...     ...           ...
+
+至少应包含：
+- ID；
+- pop；
+- lon；
+- lat；
+- bio1 至 bio19。
+
+这张表可供 GF、RONA、loadM/loadD 和部分 MaxEnt 流程共同使用。GF 和 RONA 的环境单位是群体，不建议将同一群体的个体环境重复成多行。
+
+3. climate/current_bio/
+
+当代 BIO 栅格目录：
+
+climate/current_bio/
+  bio1.tif
+  bio2.tif
+  ...
+  bio19.tif
+
+4. climate/future_scenarios/
+
+未来 BIO 栅格目录。推荐按时期、SSP 和 GCM 组织：
+
+climate/future_scenarios/
+  2061-2080-245-BCC-CSM2-MR/
+    bio1.tif ... bio19.tif
+  2061-2080-245-MPI-ESM1-2-HR/
+    bio1.tif ... bio19.tif
+  2081-2100-585-BCC-CSM2-MR/
+    bio1.tif ... bio19.tif
+  ...
+
+当代和未来栅格可以由 GF、RONA 和 MaxEnt 共同使用。
+
+5. species_mask.shp
+
+物种分布范围或分析区域 mask。Shapefile 的配套文件必须同时保留：
+
+species_mask.shp
+species_mask.shx
+species_mask.dbf
+species_mask.prj
+
+该 mask 可供 GF、RONA、MaxEnt 和地图绘制共同使用。
+
+
+三、三类基因组输入
+--------------------
+
+1. 适应性位点 VCF
+
+文件示例：
+
+adaptive_sites.vcf.gz
+
+用于 GF 和 RONA。VCF 至少需要：
+- 合法的 GT 字段；
+- 二等位位点；
+- 样本名与 population_samples.tsv 对应。
+
+BioMA 会根据该 VCF 自动生成群体 ALT allele frequency 表，并同时供 GF 和 RONA 使用。用户不需要另外维护 RONA 专用的 alt.frq。
+
+2. 全基因组过滤 VCF
+
+文件示例：
+
+whole_genome.mis0.9.maf0.00001.vcf.gz
+
+用于 MAR。该文件应为经过 Beagle、缺失率和 MAF 筛选后的全基因组位点数据。
+
+它通常不应与适应性位点 VCF 合并，因为两者的位点筛选历史和统计用途不同。
+
+3. derived + SIFT 注释 VCF 目录
+
+目录示例：
+
+load_3vcf_derived_sift/
+  strict.synonymous.vcf
+  strict.nonsynonymous.vcf
+  strict.deleterious_plain.vcf
+  relaxed.deleterious_with_warning.vcf
+
+用于 loadM/loadD。上述文件必须已经完成：
+- ancestral/derived 推断；
+- SIFT4G 注释；
+- synonymous、nonsynonymous 和 deleterious 分类。
+
+BioMA 当前不会在 loadM/loadD 模块内重新推断 derived 状态。
+
+
+四、RONA 专用输入
+------------------
+
+当前版本还需要：
+
+rona_unld/
+  LD_BIO1.prune.in
+  LD_BIO2.prune.in
+  ...
+  LD_BIO19.prune.in
+
+这些文件用于按 BIO 对候选适应性位点进行 LD 筛选。
+
+注意：population_environment.tsv 不能替代 LD 文件。环境表描述群体环境，不包含基因型位点之间的连锁信息。
+
+未来可以将 LD pruning 自动封装进 BioMA，但当前版本仍保留该输入目录。
+
+
+五、loadM/loadD 专用输入
+-------------------------
+
+未来预测环境 CSV 目录，例如：
+
+load_future/
+  future_env_ssp245_mean.csv
+  future_env_ssp585_mean.csv
+  ...
+
+每个文件至少应包含：
+
+pop    bio1    bio2    ...    bio19
+
+如果使用完整项目模式，群体 keep-list、load predictors 和部分兼容表可以由统一输入自动生成。
+
+
+六、MaxEnt 专用输入
+--------------------
+
+1. maxent.jar
+
+用户需要依法获得 MaxEnt jar。该文件不随 BioMA 分发。
+
+2. occurrence 点表
+
+项目模式下通常可根据 population_environment.tsv 自动生成，用户一般不需要单独提供 occurrence.csv。
+
+
+七、WFmoments 专用输入
+-----------------------
+
+1. 当前二值栖息地栅格
+
+current_habitat_binary.tif
+
+2. 当前观测核苷酸多样性
+
+pi_observed.csv
+
+内容示例：
+
+species,pi_obs
+P_adenopoda,0.00321
+
+3. 群体结构或 FST 参数
+
+population_structure.csv
+
+当 migration = auto 时需要该文件。
+
+4. 物种参数表
+
+species_parameters.tsv
+
+建议集中保存：
+
+species    pi_obs    fst_global_est    z_gdar
+
+5. 未来面积情景或未来二值 mask
+
+二选一：
+
+area_summary.csv
+
+或：
+
+future_masks.json
+
+WFmoments 使用这些输入描述未来栖息地剩余面积或空间收缩过程。
+
+
+八、综合脆弱性模块
+--------------------
+
+完整项目模式下，综合脆弱性所需的 GF、RONA、load 和 niche 结果由 BioMA 自动连接，用户不需要重复提供：
+
+- GF ensemble mean 表；
+- RONA ensemble 表；
+- load predictors；
+- niche maladaptation raster。
+
+
+九、用户不需要重复准备的文件
+------------------------------
+
+以下文件由 BioMA 自动生成：
+
+- 群体 ALT frequency 表；
+- MAR 样本经纬度表；
+- loadM/loadD 群体 keep-list；
+- loadM/loadD predictor 合并表；
+- MaxEnt occurrence 点表；
+- 各模块之间的兼容输入；
+- 多个 GCM 的均值或中位数结果；
+- 综合脆弱性输入表；
+- 运行 manifest、输入哈希和 HTML 报告；
+- 标准化表格、空间栅格和图片。
+
+
+十、完整项目的核心输入汇总
+----------------------------
+
+project.ini
+population_samples.tsv
+population_environment.tsv
+adaptive_sites.vcf.gz
+whole_genome.mis0.9.maf0.00001.vcf.gz
+load_3vcf_derived_sift/
+climate/current_bio/
+climate/future_scenarios/
+species_mask.shp 及其配套文件
+rona_unld/
+maxent.jar
+current_habitat_binary.tif
+pi_observed.csv
+population_structure.csv
+species_parameters.tsv
+area_summary.csv 或 future_masks.json
+load_future/
+
+未运行某个模块时，对应输入可以不提供。例如只运行 GF、RONA 和 MaxEnt，就不需要 MAR 的全基因组 VCF、loadM/loadD 的 derived/SIFT VCF 或 WFmoments 的 pi 参数。
+
+
+十一、推荐的最终简化方向
+--------------------------
+
+最终可以将用户需要维护的内容收缩为：
+
+1. 一个项目配置文件；
+2. 一个个体—群体主表；
+3. 一个群体环境表；
+4. 三类基因组数据；
+5. 一个当代/未来气候目录；
+6. 一个物种 mask；
+7. 少量物种特异参数。
+
+运行命令：
+
+bioma project project.ini --dry-run
+bioma project project.ini

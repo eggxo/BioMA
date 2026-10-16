@@ -429,7 +429,15 @@ projected to each GCM.
 Output is continuous cloglog suitability, not a directly observed occurrence
 probability. `maladaptation = current suitability - future suitability`:
 positive values mean predicted suitability loss, negative values predicted
-improvement, and zero no change. Version 0.8.x does not threshold outputs.
+improvement, and zero no change. Version 0.8.x keeps this continuous output.
+
+An optional `range_change` sub-function runs after the continuous projections.
+It applies one threshold to the current and per-GCM future suitability rasters,
+then uses a configurable GCM agreement rule to classify each cell as 0
+(unsuitable in both periods), 1 (Contract), 2 (Invariant), or 3 (Expand). It
+also reports transition areas and percentages relative to the current suitable
+area. These products can be passed to MAR and WFmoments; the continuous
+suitability and maladaptation rasters remain available unchanged.
 
 ### 8.2 Every configuration field
 
@@ -456,7 +464,11 @@ improvement, and zero no change. Version 0.8.x does not threshold outputs.
 | `[projection] scenarios` | `auto` | For example `ssp245,ssp585`; `auto` discovers. |
 | `[projection] gcms` | `auto` | GCM list; `auto` discovers. |
 | `[projection] ensemble_method` | `mean` | Pixelwise GCM `mean` or `median`; one GCM is used directly. |
-| `[projection] binary_output` | `false` | Must be `false` in version 0.8.x; no thresholded habitat is created. |
+| `[projection] binary_output` | `false` | Must be `false`; continuous MaxEnt projection remains separate from the optional `range_change` products. |
+| `[range_change] enabled` | `false` | Enable Contract, Invariant, and Expand products after continuous projection. |
+| `[range_change] threshold` | `auto` | `auto` selects the maximum-TSS threshold from the final current model; a fixed value must be between 0 and 1. |
+| `[range_change] consensus` | `majority` | GCM agreement rule: `majority`, `all`, `any`, or `minimum`. |
+| `[range_change] minimum_gcm_agreement` | `auto` | `auto` derives the required vote count; otherwise a positive integer number of GCMs. |
 | `[analysis] output_dir` | required | Result directory. |
 | `[analysis] rscript` | `Rscript` | MaxEnt tuning and projection environment. |
 | `[analysis] plot_rscript` | `Rscript` | Plotting environment, which may differ from compute R. |
@@ -473,7 +485,10 @@ fits; `rasters/` stores current, per-GCM, ensemble, and maladaptation rasters;
 `figures/` stores tuning, current, future, and maladaptation plots. Examine
 occurrence bias, background definition, extrapolation/clamping, AUC/TSS
 dispersion, and GCM agreement. Suitability change is not genetic
-maladaptation.
+maladaptation. When enabled, `range_change/rasters/` stores binary and
+transition rasters, `range_change/range_change_area_summary.csv` stores area
+statistics, and the range-change map and area figures are written under
+`figures/`.
 
 ## 9. WFmoments 2-D deme
 

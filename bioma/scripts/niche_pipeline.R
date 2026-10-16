@@ -121,6 +121,8 @@ bg_values <- raster::extract(current_all, bg[, c("lon", "lat")])
 bg <- bg[complete.cases(bg_values), , drop = FALSE]
 bg_values <- bg_values[complete.cases(bg_values), , drop = FALSE]
 if (nrow(bg) < 20) stop("Too few valid background points after masking")
+write.csv(occ[, c("lon", "lat")], file.path(out_dir, "tables", "occurrence_used.csv"), row.names = FALSE)
+write.csv(bg[, c("lon", "lat")], file.path(out_dir, "tables", "background_points.csv"), row.names = FALSE)
 
 scope <- tolower(get_cfg("correlation_scope", "occurrence"))
 cor_values <- switch(scope,

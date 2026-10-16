@@ -90,6 +90,10 @@ class NicheConfig:
     selection_metric: str
     ensemble_method: str
     binary_output: bool
+    range_change_enabled: bool
+    range_threshold: str
+    range_consensus: str
+    range_minimum_gcm_agreement: str
     seed: int
     rscript: str
     plot_rscript: str
@@ -125,6 +129,12 @@ class NicheConfig:
                 "ensemble_method": self.ensemble_method,
                 "binary_output": self.binary_output,
             },
+            "range_change": {
+                "enabled": self.range_change_enabled,
+                "threshold": self.range_threshold,
+                "consensus": self.range_consensus,
+                "minimum_gcm_agreement": self.range_minimum_gcm_agreement,
+            },
             "parameters": {"seed": self.seed, "rscript": self.rscript, "plot_rscript": self.plot_rscript, "maxent_jar": str(self.maxent_jar) if self.maxent_jar else None},
             "output_dir": str(self.output_dir),
         }
@@ -158,6 +168,7 @@ def load_config(path: Path) -> NicheConfig:
 
     base = path.parent
     i, v, t, p, a = (parser[s] for s in ("inputs", "variables", "tuning", "projection", "analysis"))
+    r = parser["range_change"] if parser.has_section("range_change") else {}
     work_dir = _path(i.get("work_dir", ""), base, "work_dir")
     occurrence = _path(i.get("occurrence_csv", ""), base, "occurrence_csv")
     current = _path(i.get("current_env_dir", ""), base, "current_env_dir")
@@ -202,6 +213,10 @@ def load_config(path: Path) -> NicheConfig:
         selection_metric=t.get("selection_metric", "auc").strip().lower(),
         ensemble_method=p.get("ensemble_method", "mean").strip().lower(),
         binary_output=_bool(p.get("binary_output", "false")),
+        range_change_enabled=_bool(r.get("enabled", "false")),
+        range_threshold=r.get("threshold", "auto").strip().lower() or "auto",
+        range_consensus=r.get("consensus", "majority").strip().lower() or "majority",
+        range_minimum_gcm_agreement=r.get("minimum_gcm_agreement", "auto").strip().lower() or "auto",
         seed=int(t.get("seed", "123")),
         rscript=a.get("rscript", "Rscript").strip() or "Rscript",
         plot_rscript=a.get("plot_rscript", "Rscript").strip() or "Rscript",
@@ -226,6 +241,22 @@ def load_config(path: Path) -> NicheConfig:
         raise InputError("ensemble_method must be mean or median")
     if cfg.binary_output:
         raise InputError("binary_output must be false for the current continuous-suitability workflow")
+    if cfg.range_threshold != "auto":
+        try:
+            threshold_value = float(cfg.range_threshold)
+        except ValueError:
+            raise InputError("range_change threshold must be auto or a number between 0 and 1")
+        if not 0 < threshold_value < 1:
+            raise InputError("range_change threshold must be auto or a number between 0 and 1")
+    if cfg.range_consensus not in {"majority", "all", "any", "minimum"}:
+        raise InputError("range_change consensus must be majority, all, any, or minimum")
+    if cfg.range_minimum_gcm_agreement != "auto":
+        try:
+            minimum = int(cfg.range_minimum_gcm_agreement)
+        except ValueError:
+            raise InputError("minimum_gcm_agreement must be auto or a positive integer")
+        if minimum < 1:
+            raise InputError("minimum_gcm_agreement must be auto or a positive integer")
     if cfg.max_models < 1 or cfg.background_n < 10 or cfg.cv_folds < 2 or not cfg.subset_sizes or any(x < 1 for x in cfg.subset_sizes):
         raise InputError("Invalid tuning parameters")
     if not feature_classes or not betas:
@@ -251,7 +282,7 @@ def _future_dirs(cfg: NicheConfig) -> Dict[str, Path]:
 def _write_spec(cfg: NicheConfig, future_dirs: Dict[str, Path]) -> Path:
     cfg.output_dir.mkdir(parents=True, exist_ok=True)
     spec = cfg.output_dir / "niche_config.tsv"
-    rows = {"work_dir": str(cfg.work_dir), "occurrence_csv": str(cfg.occurrence_csv), "current_env_dir": str(cfg.current_env_dir), "future_root": str(cfg.future_root), "mask_shp": str(cfg.mask_shp), "output_dir": str(cfg.output_dir), "periods": ",".join(cfg.periods), "scenarios": ",".join(cfg.scenarios), "gcms": ",".join(cfg.gcms), "correlation_threshold": str(cfg.correlation_threshold), "correlation_method": cfg.correlation_method, "correlation_scope": cfg.correlation_scope, "subset_sizes": ",".join(map(str, cfg.subset_sizes)), "max_models": str(cfg.max_models), "background_n": str(cfg.background_n), "cv_folds": str(cfg.cv_folds), "feature_classes": ",".join(cfg.feature_classes), "beta_multipliers": ",".join(map(str, cfg.beta_multipliers)), "selection_metric": cfg.selection_metric, "ensemble_method": cfg.ensemble_method, "binary_output": str(cfg.binary_output).lower(), "seed": str(cfg.seed), "maxent_jar": str(cfg.maxent_jar or "")}
+    rows = {"work_dir": str(cfg.work_dir), "occurrence_csv": str(cfg.occurrence_csv), "current_env_dir": str(cfg.current_env_dir), "future_root": str(cfg.future_root), "mask_shp": str(cfg.mask_shp), "output_dir": str(cfg.output_dir), "periods": ",".join(cfg.periods), "scenarios": ",".join(cfg.scenarios), "gcms": ",".join(cfg.gcms), "correlation_threshold": str(cfg.correlation_threshold), "correlation_method": cfg.correlation_method, "correlation_scope": cfg.correlation_scope, "subset_sizes": ",".join(map(str, cfg.subset_sizes)), "max_models": str(cfg.max_models), "background_n": str(cfg.background_n), "cv_folds": str(cfg.cv_folds), "feature_classes": ",".join(cfg.feature_classes), "beta_multipliers": ",".join(map(str, cfg.beta_multipliers)), "selection_metric": cfg.selection_metric, "ensemble_method": cfg.ensemble_method, "binary_output": str(cfg.binary_output).lower(), "range_change_enabled": str(cfg.range_change_enabled).lower(), "range_threshold": cfg.range_threshold, "range_consensus": cfg.range_consensus, "range_minimum_gcm_agreement": cfg.range_minimum_gcm_agreement, "seed": str(cfg.seed), "maxent_jar": str(cfg.maxent_jar or "")}
     with spec.open("w", encoding="utf-8", newline="") as handle:
         for key, value in rows.items():
             handle.write("{}\t{}\n".format(key, value.replace("\t", " ")))
@@ -267,7 +298,8 @@ def run_niche_workflow(config_path: Path, dry_run: bool = False, progress: Optio
     script_dir = Path(__file__).resolve().parent / "scripts"
     pipeline = script_dir / "niche_pipeline.R"
     plotter = script_dir / "niche_plot.R"
-    if not pipeline.is_file() or not plotter.is_file():
+    range_change_script = script_dir / "niche_range_change.R"
+    if not pipeline.is_file() or not plotter.is_file() or not range_change_script.is_file():
         raise InputError("Niche scripts are missing from {}".format(script_dir))
     jar_input = None
     if cfg.maxent_jar:
@@ -283,6 +315,7 @@ def run_niche_workflow(config_path: Path, dry_run: bool = False, progress: Optio
         "maxent_jar": cfg.maxent_jar,
         "pipeline_script": pipeline,
         "plot_script": plotter,
+        "range_change_script": range_change_script,
     }
     for path in _bio_raster_files(cfg.current_env_dir):
         input_paths["current_bio__{}".format(path.name)] = path
@@ -306,12 +339,23 @@ def run_niche_workflow(config_path: Path, dry_run: bool = False, progress: Optio
     (cfg.output_dir / "niche_pipeline.log").write_text(result.stdout, encoding="utf-8")
     if result.returncode:
         raise InputError("MaxEnt niche pipeline failed; see {}".format(cfg.output_dir / "niche_pipeline.log"))
+    if cfg.range_change_enabled:
+        if progress:
+            progress("Calculating habitat contraction, persistence, and expansion")
+        result = subprocess.run([cfg.plot_rscript, str(range_change_script), str(spec)], cwd=str(cfg.work_dir), text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=subprocess_environment(cfg.plot_rscript))
+        (cfg.output_dir / "niche_range_change.log").write_text(result.stdout, encoding="utf-8")
+        if result.returncode:
+            raise InputError("Niche range-change analysis failed; see {}".format(cfg.output_dir / "niche_range_change.log"))
     if progress:
         progress("Drawing continuous suitability and maladaptation maps")
     result = subprocess.run([cfg.plot_rscript, str(plotter), str(cfg.output_dir), str(cfg.occurrence_csv), str(cfg.mask_shp)], cwd=str(cfg.work_dir), text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=subprocess_environment(cfg.plot_rscript))
     (cfg.output_dir / "niche_plot.log").write_text(result.stdout, encoding="utf-8")
     if result.returncode:
         raise InputError("Niche plotting failed; see {}".format(cfg.output_dir / "niche_plot.log"))
-    manifest.update({"status": "complete", "elapsed_seconds": round(time.time() - started, 3), "outputs": {"output_dir": str(cfg.output_dir), "tuning_metrics": str(cfg.output_dir / "tuning_metrics.csv"), "selected_model": str(cfg.output_dir / "selected_model.tsv"), "rasters": str(cfg.output_dir / "rasters"), "figures": str(cfg.output_dir / "figures")}, "config_sha256": hashlib.sha256(cfg.config_path.read_bytes()).hexdigest()})
+    outputs = {"output_dir": str(cfg.output_dir), "tuning_metrics": str(cfg.output_dir / "tuning_metrics.csv"), "selected_model": str(cfg.output_dir / "selected_model.tsv"), "rasters": str(cfg.output_dir / "rasters"), "figures": str(cfg.output_dir / "figures")}
+    if cfg.range_change_enabled:
+        outputs["range_change_table"] = str(cfg.output_dir / "range_change" / "range_change_area_summary.csv")
+        outputs["range_change_rasters"] = str(cfg.output_dir / "range_change" / "rasters")
+    manifest.update({"status": "complete", "elapsed_seconds": round(time.time() - started, 3), "outputs": outputs, "config_sha256": hashlib.sha256(cfg.config_path.read_bytes()).hexdigest()})
     (cfg.output_dir / "run_manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
     return manifest

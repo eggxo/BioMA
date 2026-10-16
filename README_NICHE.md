@@ -6,8 +6,15 @@ and [中文手册](docs/USER_GUIDE.zh-CN.md#8-maxent-生态位).
 
 The niche module runs a MaxEnt-only species-distribution workflow with
 automatic variable selection, parameter tuning, and configurable future
-projections. It keeps suitability continuous; binary habitat maps are not
-created in the current version.
+projections. Suitability remains continuous by default; binary habitat maps
+are created only when the optional `range_change` sub-function is enabled.
+
+An optional `range_change` sub-function can be enabled after continuous
+projection. It applies a user-selected or maximum-TSS threshold to the current
+and per-GCM future suitability rasters, applies a configurable GCM agreement
+rule, and writes Contract, Invariant, and Expand transition rasters together
+with area summaries. The continuous suitability and maladaptation products are
+kept unchanged.
 
 ## One-command use
 
@@ -58,6 +65,21 @@ continuous `current suitability - future suitability`.
 When one GCM is configured, that projection is used directly as the ensemble;
 there is no artificial second model or change to the suitability values.
 
+To enable habitat transition products, add the following section:
+
+```ini
+[range_change]
+enabled = true
+threshold = auto
+consensus = majority
+minimum_gcm_agreement = auto
+```
+
+`threshold = auto` selects the maximum TSS threshold from the final current
+model. With three GCMs, `consensus = majority` requires two future projections
+to be suitable. `all`, `any`, and `minimum` are available for other study
+designs.
+
 ## Outputs
 
 Under `output_dir`:
@@ -69,6 +91,12 @@ Under `output_dir`:
 - `tables/maladaptation_points_*.csv` and `projection_manifest.csv`;
 - `figures/` with current suitability, future suitability maps, continuous
   maladaptation maps, combined map panels, and a tuning plot;
+- `range_change/rasters/` with current/future binary habitat and transition
+  classes when `range_change` is enabled;
+- `range_change/range_change_area_summary.csv` with Contract, Invariant, and
+  Expand areas and percentages;
+- `figures/Figure_Niche_Range_Change_Maps.*` and
+  `figures/Figure_Niche_Range_Change_Area.*` with transition figures;
 - `niche_pipeline.log`, `niche_plot.log`, and `run_manifest.json`.
 
 The run manifest records content fingerprints for the occurrence table,

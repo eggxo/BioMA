@@ -24,6 +24,7 @@ flowchart LR
         RN[RONA\n逐 BIO 回归与 ensemble]
         LOAD[loadM / loadD\n遗传负荷预测]
         NX[MaxEnt\n生态位与未来适生性]
+        NXR[生态位子功能\nContract / Invariant / Expand]
         MAR[MAR\n全基因组遗传损失]
         WF[WFmoments\n2-D deme 多样性损失]
     end
@@ -48,12 +49,14 @@ flowchart LR
     CL --> RN
     CL --> LOAD
     CL --> NX
+    NX --> NXR
     SP --> WF
     CL --> WF
     GF --> V
     RN --> V
     LOAD --> V
     NX --> V
+    NXR --> DA
     MAR --> DA
     WF --> DA
 ```

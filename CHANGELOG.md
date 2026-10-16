@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Add an optional niche `range_change` sub-function that derives Contract,
+  Invariant, and Expand habitat-transition rasters from continuous MaxEnt
+  projections, with automatic maximum-TSS or fixed thresholds, configurable
+  GCM agreement, area summaries, and transition figures.
+
 ## 0.8.4 - 2026-09-06
 
 - Add matching Chinese and English user/methods guides for project mode and
